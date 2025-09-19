@@ -91,12 +91,13 @@ void UUVPOSControl::parameters_update(bool force)
 }
 
 void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitude_s &vehicle_attitude,
-		vehicle_local_position_s &vlocal_pos, bool altitude_mode)
+		vehicle_local_position_s &vlocal_pos, const Vector3f &vel_des, bool altitude_mode)
 {
 	//get current rotation of vehicle
 	Quatf q_att(vehicle_attitude.q);
 
 	// Assumes target 0 velocity
+	// use depth measurement for depth hold and dvl reading for altitude hold
 	Vector3f p_control_output = Vector3f(_param_pose_gain_x.get() * (pos_des(0) - vlocal_pos.x) - _param_pose_gain_d_x.get()
 					     * vlocal_pos.vx,
 					     _param_pose_gain_y.get() * (pos_des(1) - vlocal_pos.y) - _param_pose_gain_d_y.get() * vlocal_pos.vy,
@@ -106,8 +107,28 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 		// In altitude mode, we only control the z-axis
 		p_control_output(0) = 0.0f;
 		p_control_output(1) = 0.0f;
+
+		// Use available world velocity estimate
+		// TODO: totally use external local position velocity estimate
+        	Vector3f v_world(vlocal_pos.vx, vlocal_pos.vy, vlocal_pos.vz);
+
+		// Simple P controller on velocity in X–Y (world)
+		const float Kp_vel_x = _param_pose_gain_d_x.get();
+		const float Kp_vel_y = _param_pose_gain_d_y.get();
+		Vector3f u_xy_world = Vector3f(Kp_vel_x * (vel_des(0) - v_world(0)),
+						Kp_vel_y * (vel_des(1) - v_world(1)),
+						0.0f);
+
+		// Optional damping on velocity error (reuse your D gains lightly)
+		// u_xy_world(0) -= _param_pose_gain_d_x.get() * v_world(0) * _param_xy_assist_damp.get();
+		// u_xy_world(1) -= _param_pose_gain_d_y.get() * v_world(1) * _param_xy_assist_damp.get();
+
+		// Inject into the world-frame control output (X–Y only)
+		p_control_output(0) += u_xy_world(0);
+		p_control_output(1) += u_xy_world(1);
 	}
 
+	// TODO : use the same vehicle attitude for conversion back to body frame
 	Vector3f rotated_input = q_att.rotateVectorInverse(p_control_output); //rotate the coord.sys (from global to body)
 
 	_attitude_setpoint.timestamp = hrt_absolute_time();
@@ -306,7 +327,7 @@ void UUVPOSControl::Run()
 			generate_trajectory_setpoint(vlocal_pos, _vehicle_attitude, dt);
 
 			pose_controller_6dof(Vector3f(_trajectory_setpoint.position), _vehicle_attitude,
-					     vlocal_pos, altitude_only_flag);
+					     vlocal_pos, Vector3f(_trajectory_setpoint.velocity), altitude_only_flag);
 
 		} else if (!_vcontrol_mode.flag_control_manual_enabled
 			   && (_vcontrol_mode.flag_control_altitude_enabled
@@ -320,7 +341,7 @@ void UUVPOSControl::Run()
 			_trajectory_setpoint_sub.update(&_trajectory_setpoint);
 
 			pose_controller_6dof(Vector3f(_trajectory_setpoint.position), _vehicle_attitude,
-					     vlocal_pos, altitude_only_flag);
+					     vlocal_pos, Vector3f(_trajectory_setpoint.velocity), altitude_only_flag);
 
 		} else {
 			// Reset if not in a valid mode (like attitude, rate, manual) to clear setpoint
