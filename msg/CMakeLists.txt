@@ -269,6 +269,7 @@ set(msg_files
 	versioned/ExternalVehicleLocalPosition.msg
 	versioned/ExternalVehicleAngularVelocity.msg
 	versioned/ExternalVehicleAttitude.msg
+	versioned/DopplerVelocityLog.msg
 )
 list(SORT msg_files)
 

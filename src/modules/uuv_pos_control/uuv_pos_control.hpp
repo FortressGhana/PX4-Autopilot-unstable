@@ -68,6 +68,7 @@
 #include <uORB/topics/vehicle_angular_velocity.h>
 #include <uORB/topics/vehicle_rates_setpoint.h>
 #include <uORB/topics/vehicle_control_mode.h>
+#include <uORB/topics/doppler_velocity_log.h>
 #include <uORB/uORB.h>
 
 using matrix::Eulerf;
@@ -105,7 +106,7 @@ private:
 	uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint6dof)};
 	uORB::Subscription _vcontrol_mode_sub{ORB_ID(vehicle_control_mode)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};	/**< notification of manual control updates */
-
+	uORB::SubscriptionCallbackWorkItem _doppler_velocity_log_sub{this, ORB_ID(doppler_velocity_log)};
 	uORB::SubscriptionCallbackWorkItem _vehicle_local_position_sub{this, ORB_ID(vehicle_local_position)};
 
 	vehicle_attitude_s _vehicle_attitude{};
@@ -116,6 +117,8 @@ private:
 
 	perf_counter_t	_loop_perf;
 	hrt_abstime _last_run{0};
+	float _pos_i_z{0.0f};
+
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::UUV_GAIN_X_P>) _param_pose_gain_x,
@@ -131,7 +134,12 @@ private:
 		(ParamFloat<px4::params::UUV_SGM_PITCH>) _param_sgm_pitch,
 		(ParamFloat<px4::params::UUV_SGM_YAW>) _param_sgm_yaw,
 		(ParamFloat<px4::params::UUV_SP_MAX_AGE>) _param_setpoint_max_age,
-		(ParamInt<px4::params::UUV_POS_MODE>) _param_pos_mode
+		(ParamInt<px4::params::UUV_POS_MODE>) _param_pos_mode,
+		(ParamFloat<px4::params::POSE_KI_Z>) _param_pose_ki_z,
+		(ParamFloat<px4::params::POSE_I_MAX_Z>) _param_pose_i_max_z,
+		(ParamInt<px4::params::POSE_Z_I_ENABLE>) _param_pose_z_i_enable,
+		(ParamFloat<px4::params::DVL_ALT_MAX_AGE>) _param_dvl_alt_max_age
+
 	)
 
 	void Run() override;
@@ -146,7 +154,8 @@ private:
 	void publish_attitude_setpoint(const float thrust_x, const float thrust_y, const float thrust_z,
 				       const float roll_des, const float pitch_des, const float yaw_des);
 	void pose_controller_6dof(const Vector3f &pos_des, vehicle_attitude_s &vehicle_attitude,
-				  vehicle_local_position_s &vlocal_pos, const Vector3f &vel_des, bool altitude_mode);
+				  vehicle_local_position_s &vlocal_pos, const Vector3f &vel_des,
+				  bool altitude_mode, doppler_velocity_log_s &dvl, float dt);
 	void stabilization_controller_6dof(const Vector3f &pos_des,
 					   const float roll_des, const float pitch_des, const float yaw_des,
 					   vehicle_attitude_s &vehicle_attitude, vehicle_local_position_s &vlocal_pos);

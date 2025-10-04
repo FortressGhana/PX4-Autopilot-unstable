@@ -118,3 +118,31 @@ PARAM_DEFINE_FLOAT(UUV_PGM_VEL, 0.5f);
  * @group UUV Position Control
  */
 PARAM_DEFINE_INT32(UUV_POS_MODE, 1);
+
+/**
+ * Integral gain for Z axis position control
+ *
+ * @group UUV Position Control
+ */
+PARAM_DEFINE_FLOAT(POSE_KI_Z, 0.0f);
+
+/**
+ * Maximum absolute value for the integrator in Z axis position control
+ *
+ * @group UUV Position Control
+ */
+PARAM_DEFINE_INT32(POSE_Z_I_ENABLE, 0);
+
+/**
+ * Maximum absolute value for the integrator in Z axis position control
+ *
+ * @group UUV Position Control
+ */
+PARAM_DEFINE_FLOAT(POSE_I_MAX_Z, 0.0f);
+
+/**
+ * Maximum age of dvl setpoint
+ *
+ * @group UUV Position Control
+ */
+PARAM_DEFINE_FLOAT(DVL_ALT_MAX_AGE, 1.0f);

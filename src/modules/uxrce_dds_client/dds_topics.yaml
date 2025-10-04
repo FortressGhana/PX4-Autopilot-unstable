@@ -184,6 +184,9 @@ subscriptions:
   - topic: /fmu/in/trajectory_setpoint6dof
     type: px4_msgs::msg::TrajectorySetpoint6dof
 
+  - topic: /fmu/in/doppler_velocity_log
+    type: px4_msgs::msg::DopplerVelocityLog
+
 # Create uORB::PublicationMulti
 subscriptions_multi:
 
