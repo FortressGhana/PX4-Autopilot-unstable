@@ -189,4 +189,8 @@ private:
 	void reset_attitude_setpoint(vehicle_attitude_s &v_att);
 	void check_setpoint_validity(vehicle_attitude_s &v_att);
 	bool select_angular_velocity(vehicle_angular_velocity_s &angular_velocity);
+	bool try_get_external_angular_velocity(vehicle_angular_velocity_s &out, const hrt_abstime &now);
+	void transition_to_source(AngularVelocitySource new_source, const hrt_abstime &now);
+	void log_validation_failure(const char* reason, float age, const hrt_abstime &now);
+	const char* get_angular_velocity_source_name() const;
 };

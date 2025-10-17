@@ -321,7 +321,7 @@ bool UUVAttitudeControl::select_angular_velocity(vehicle_angular_velocity_s &out
     return false;
 }
 
-bool UUVAttitudeControl::try_get_external_angular_velocity(vehicle_angular_velocity_s &out, hrt_abstime now)
+bool UUVAttitudeControl::try_get_external_angular_velocity(vehicle_angular_velocity_s &out, const hrt_abstime &now)
 {
     external_vehicle_angular_velocity_s ext{};
 
@@ -362,7 +362,7 @@ bool UUVAttitudeControl::try_get_external_angular_velocity(vehicle_angular_veloc
     return true;
 }
 
-void UUVAttitudeControl::transition_to_source(AngularVelocitySource new_source, hrt_abstime now)
+void UUVAttitudeControl::transition_to_source(AngularVelocitySource new_source, const hrt_abstime &now)
 {
     if (new_source == _current_ang_vel_source) {
         return; // No change
@@ -383,7 +383,7 @@ void UUVAttitudeControl::transition_to_source(AngularVelocitySource new_source, 
     _last_source_switch_us = now;
 }
 
-void UUVAttitudeControl::log_validation_failure(const char* reason, float age, hrt_abstime now)
+void UUVAttitudeControl::log_validation_failure(const char* reason, float age, const hrt_abstime &now)
 {
     if (now - _last_ext_vel_warning_us > WARNING_THROTTLE_US) {
         PX4_WARN("External angular velocity rejected: %s (age=%.3fs)",
