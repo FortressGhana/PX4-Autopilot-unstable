@@ -298,28 +298,109 @@ bool UUVAttitudeControl::select_angular_velocity(vehicle_angular_velocity_s &out
 {
     const hrt_abstime now = hrt_absolute_time();
 
-    if (_param_use_ext_w.get()) {
-        external_vehicle_angular_velocity_s ext{};
-        if (_ext_ang_vel_sub.update(&ext)) {
-            const float age = (now - ext.timestamp) * 1e-6f;
-            if (PX4_ISFINITE(ext.xyz[0]) && PX4_ISFINITE(ext.xyz[1]) && PX4_ISFINITE(ext.xyz[2]) &&
-                age >= 0.f && age <= _param_extw_max_age_s.get()) {
-                out.timestamp = ext.timestamp;
-                out.timestamp_sample = ext.timestamp_sample ? ext.timestamp_sample : ext.timestamp;
-                out.xyz[0] = ext.xyz[0];
-                out.xyz[1] = ext.xyz[1];
-                out.xyz[2] = ext.xyz[2];
-                out.xyz_derivative[0] = ext.xyz_derivative[0];
-                out.xyz_derivative[1] = ext.xyz_derivative[1];
-                out.xyz_derivative[2] = ext.xyz_derivative[2];
-                return true;
-            }
-        }
-        // stale/missing → fall through to PX4 gyro
+    // Try external source first (always, no parameter check)
+    if (try_get_external_angular_velocity(out, now)) {
+        transition_to_source(AngularVelocitySource::EXTERNAL, now);
+        return true;
     }
 
-    // Fallback: standard PX4 pipeline
-    return _angular_velocity_sub.copy(&out);
+    // Fallback to PX4 gyro
+    if (_angular_velocity_sub.copy(&out)) {
+        transition_to_source(AngularVelocitySource::PX4_GYRO, now);
+        return true;
+    }
+
+    // No valid source available
+    transition_to_source(AngularVelocitySource::NONE, now);
+
+    if (now - _last_ext_vel_warning_us > WARNING_THROTTLE_US) {
+        PX4_ERR("No valid angular velocity source available");
+        _last_ext_vel_warning_us = now;
+    }
+
+    return false;
+}
+
+bool UUVAttitudeControl::try_get_external_angular_velocity(vehicle_angular_velocity_s &out, hrt_abstime now)
+{
+    external_vehicle_angular_velocity_s ext{};
+
+    // Try to get external data
+    if (!_ext_ang_vel_sub.update(&ext)) {
+        return false;
+    }
+
+    // Validate timestamp age
+    const float age = (now - ext.timestamp) * 1e-6f;
+
+    if (age < 0.f) {
+        log_validation_failure("Future timestamp", age, now);
+        return false;
+    }
+
+    if (age > _param_extw_max_age_s.get()) {
+        log_validation_failure("Stale data", age, now);
+        return false;
+    }
+
+    // Validate finite values
+    if (!PX4_ISFINITE(ext.xyz[0]) || !PX4_ISFINITE(ext.xyz[1]) || !PX4_ISFINITE(ext.xyz[2])) {
+        log_validation_failure("Non-finite values", age, now);
+        return false;
+    }
+
+    // All validation passed - copy data
+    out.timestamp = ext.timestamp;
+    out.timestamp_sample = ext.timestamp_sample ? ext.timestamp_sample : ext.timestamp;
+    out.xyz[0] = ext.xyz[0];
+    out.xyz[1] = ext.xyz[1];
+    out.xyz[2] = ext.xyz[2];
+    out.xyz_derivative[0] = ext.xyz_derivative[0];
+    out.xyz_derivative[1] = ext.xyz_derivative[1];
+    out.xyz_derivative[2] = ext.xyz_derivative[2];
+
+    return true;
+}
+
+void UUVAttitudeControl::transition_to_source(AngularVelocitySource new_source, hrt_abstime now)
+{
+    if (new_source == _current_ang_vel_source) {
+        return; // No change
+    }
+
+    // Add hysteresis to prevent rapid switching
+    if (now - _last_source_switch_us < SOURCE_SWITCH_HYSTERESIS_US) {
+        return; // Too soon to switch
+    }
+
+    // Log the transition
+    const char* source_names[] = {"EXTERNAL", "PX4_GYRO", "NONE"};
+    PX4_INFO("Angular velocity source: %s -> %s",
+             source_names[static_cast<int>(_current_ang_vel_source)],
+             source_names[static_cast<int>(new_source)]);
+
+    _current_ang_vel_source = new_source;
+    _last_source_switch_us = now;
+}
+
+void UUVAttitudeControl::log_validation_failure(const char* reason, float age, hrt_abstime now)
+{
+    if (now - _last_ext_vel_warning_us > WARNING_THROTTLE_US) {
+        PX4_WARN("External angular velocity rejected: %s (age=%.3fs)",
+                 reason, (double)age);
+        _last_ext_vel_warning_us = now;
+    }
+}
+
+// Optional: Add diagnostic method for status output
+const char* UUVAttitudeControl::get_angular_velocity_source_name() const
+{
+    switch (_current_ang_vel_source) {
+        case AngularVelocitySource::EXTERNAL: return "EXTERNAL";
+        case AngularVelocitySource::PX4_GYRO: return "PX4_GYRO";
+        case AngularVelocitySource::NONE: return "NONE";
+        default: return "UNKNOWN";
+    }
 }
 
 void UUVAttitudeControl::Run()

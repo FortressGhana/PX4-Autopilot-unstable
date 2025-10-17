@@ -1019,45 +1019,22 @@ void EKF2::PublishAidSourceStatus(const hrt_abstime &timestamp)
 
 void EKF2::PublishAttitude(const hrt_abstime &timestamp)
 {
-	bool new_ev_odom = false;
 
-	if (_param_ekf2_ext_pos.get()) {
-		const hrt_abstime now = hrt_absolute_time();
-		if(_external_vehicle_attitude_sub.update(&_external_attitude)) {
-			// we have a new external vehicle attitude
-			vehicle_attitude_s att{};
-			att.timestamp_sample = _external_attitude.timestamp;
-			memcpy(att.q, _external_attitude.q, sizeof(att.q));
-
-			att.delta_q_reset[0] = 1.f;
-			att.delta_q_reset[1] = 0.f;
-			att.delta_q_reset[2] = 0.f;
-			att.delta_q_reset[3] = 0.f;
-			att.quat_reset_counter = 0;
-			att.timestamp = now;
-			_attitude_pub.publish(att);
-			new_ev_odom = true;
-		}
-
-	}
-
-	if(!new_ev_odom) {
-		if (_ekf.attitude_valid()) {
-			// generate vehicle attitude quaternion data
-			vehicle_attitude_s att;
-			att.timestamp_sample = timestamp;
-			_ekf.getQuaternion().copyTo(att.q);
+	if (_ekf.attitude_valid()) {
+		// generate vehicle attitude quaternion data
+		vehicle_attitude_s att;
+		att.timestamp_sample = timestamp;
+		_ekf.getQuaternion().copyTo(att.q);
 
 		_ekf.get_quat_reset(&att.delta_q_reset[0], &att.quat_reset_counter);
 		att.timestamp = _replay_mode ? timestamp : hrt_absolute_time();
 		_attitude_pub.publish(att);
 
-		}  else if (_replay_mode) {
-			// in replay mode we have to tell the replay module not to wait for an update
-			// we do this by publishing an attitude with zero timestamp
-			vehicle_attitude_s att{};
-			_attitude_pub.publish(att);
-		}
+	}  else if (_replay_mode) {
+		// in replay mode we have to tell the replay module not to wait for an update
+		// we do this by publishing an attitude with zero timestamp
+		vehicle_attitude_s att{};
+		_attitude_pub.publish(att);
 	}
 }
 

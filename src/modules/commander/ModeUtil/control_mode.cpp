@@ -122,13 +122,13 @@ void getVehicleControlMode(uint8_t nav_state, uint8_t vehicle_type,
 	case vehicle_status_s::NAVIGATION_STATE_OFFBOARD:
 		vehicle_control_mode.flag_control_offboard_enabled = true;
 
-		// position control for only depth
-		// atitude control for stabilized mode
+		// position control for position mode, and position lock
+		// velocity control for velocity mode
 		if (offboard_control_mode.position) {
 			vehicle_control_mode.flag_control_manual_enabled = true;
 			vehicle_control_mode.flag_control_position_enabled = true;
 			vehicle_control_mode.flag_control_velocity_enabled = true;
-			vehicle_control_mode.flag_control_altitude_enabled = true;
+			vehicle_control_mode.flag_control_altitude_enabled = false;
 			vehicle_control_mode.flag_control_climb_rate_enabled = true;
 			vehicle_control_mode.flag_control_acceleration_enabled = true;
 			vehicle_control_mode.flag_control_attitude_enabled = true;
@@ -136,7 +136,7 @@ void getVehicleControlMode(uint8_t nav_state, uint8_t vehicle_type,
 			vehicle_control_mode.flag_control_allocation_enabled = true;
 
 		} else if (offboard_control_mode.velocity) {
-			// vehicle_control_mode.flag_control_manual_enabled = true;
+			vehicle_control_mode.flag_control_manual_enabled = true;
 			vehicle_control_mode.flag_control_velocity_enabled = true;
 			vehicle_control_mode.flag_control_altitude_enabled = true;
 			vehicle_control_mode.flag_control_climb_rate_enabled = true;

@@ -88,6 +88,12 @@ using namespace time_literals;
 class UUVAttitudeControl: public ModuleBase<UUVAttitudeControl>, public ModuleParams, public px4::WorkItem
 {
 public:
+	enum class AngularVelocitySource {
+	EXTERNAL,
+	PX4_GYRO,
+	NONE
+	};
+
 	UUVAttitudeControl();
 	~UUVAttitudeControl();
 
@@ -128,6 +134,13 @@ private:
 
 	perf_counter_t	_loop_perf;
 	hrt_abstime _last_run{0};
+	// Member variables
+	AngularVelocitySource _current_ang_vel_source{AngularVelocitySource::PX4_GYRO};
+	uint64_t _last_ext_vel_warning_us{0};
+	uint64_t _last_source_switch_us{0};
+	static constexpr uint64_t WARNING_THROTTLE_US = 5000000; // 5 seconds
+	static constexpr uint64_t SOURCE_SWITCH_HYSTERESIS_US = 100000; // 100ms
+
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::UUV_ROLL_P>) _param_roll_p,

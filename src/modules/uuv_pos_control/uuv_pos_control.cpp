@@ -102,7 +102,7 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 	//get current rotation of vehicle
 	Quatf q_att(vehicle_attitude.q);
 
-		// --- Vertical measurement selection: prefer DVL altitude when fresh
+	// --- Vertical measurement selection: prefer DVL altitude when fresh
 	float z_meas = vlocal_pos.z; // default fallback
 	float vz_meas_ned = vlocal_pos.vz;
 	const hrt_abstime now = hrt_absolute_time();
@@ -141,7 +141,7 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 	if (altitude_mode) {
 		// ALTITUDE HOLD MODE: Only control Z, track velocity in X-Y
 		p_control_output = Vector3f(
-		 - _param_pose_gain_d_x.get() * vel_err(0),
+		- _param_pose_gain_d_x.get() * vel_err(0),
 		- _param_pose_gain_d_y.get() * vel_err(1),
 		_param_pose_gain_z.get() * pos_err(2) - _param_pose_gain_d_z.get() * vel_err(2) + _pos_i_z
 		);
