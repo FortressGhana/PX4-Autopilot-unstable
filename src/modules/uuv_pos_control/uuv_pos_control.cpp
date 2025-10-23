@@ -95,7 +95,7 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 		doppler_velocity_log_s &dvl, float dt)
 {
 	if (!(dt > 0.0f)) {
-		// nothing to integrate or differentiate
+		PX4_WARN("Nothing to integrate/differentiate, dt=%f", (double)dt);
 		dt = 1e-3f;
     	}
 
@@ -113,6 +113,9 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 		dvl_ok = (dvl_age_s >= 0.0f) && (dvl_age_s <= _param_dvl_alt_max_age.get()) && PX4_ISFINITE(dvl.altitude);
 	}
 	if (dvl_ok) {
+
+		// add logging
+		PX4_WARN("Using DVL altitude");
 		z_meas = -dvl.altitude; // DVL altitude is opposite to local position z
 
 		if (PX4_ISFINITE(dvl.velocity[2])) {
@@ -168,6 +171,12 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 	_attitude_setpoint.thrust_body[0] = rotated_input(0);
 	_attitude_setpoint.thrust_body[1] = rotated_input(1);
 	_attitude_setpoint.thrust_body[2] = rotated_input(2);
+
+	// log attitude setpoint
+	PX4_WARN("Attitude setpoint thrust: x: %.2f, y: %.2f, z: %.2f",
+		  (double)_attitude_setpoint.thrust_body[0],
+		  (double)_attitude_setpoint.thrust_body[1],
+		  (double)_attitude_setpoint.thrust_body[2]);
 }
 
 void UUVPOSControl::check_setpoint_validity(vehicle_local_position_s &vlocal_pos)
