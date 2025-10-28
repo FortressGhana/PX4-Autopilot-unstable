@@ -95,7 +95,7 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 		doppler_velocity_log_s &dvl, float dt)
 {
 	if (!(dt > 0.0f)) {
-		PX4_WARN("Nothing to integrate/differentiate, dt=%f", (double)dt);
+		PX4_INFO("Nothing to integrate/differentiate, dt=%f", (double)dt);
 		dt = 1e-3f;
     	}
 
@@ -115,7 +115,7 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 	if (dvl_ok) {
 
 		// add logging
-		PX4_WARN("Using DVL altitude");
+		PX4_INFO("Using DVL altitude");
 		z_meas = -dvl.altitude; // DVL altitude is opposite to local position z
 
 		if (PX4_ISFINITE(dvl.velocity[2])) {
