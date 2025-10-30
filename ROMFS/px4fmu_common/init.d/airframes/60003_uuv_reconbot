@@ -51,7 +51,7 @@ param set-default COM_POSCTL_NAVL 2
 param set-default FD_FAIL_P 0
 param set-default FD_FAIL_R 0
 
-param set-default CA_ROTOR_COUNT 8
+param set-default CA_ROTOR_COUNT 10
 param set-default CA_R_REV 255
 
 param set-default CA_ROTOR0_AX 0
@@ -156,14 +156,23 @@ param set-default PWM_MAIN_DIS8 1250
 
 
 #Assign AUX motors
-param set-default PWM_AUX_FUNC1 0
-param set-default PWM_AUX_FUNC2 0
-param set-default PWM_AUX_FUNC3 301
-param set-default PWM_AUX_FUNC4 302
+param set-default PWM_AUX_FUNC1 109
+param set-default PWM_AUX_FUNC2 110
+param set-default PWM_AUX_FUNC3 0
+param set-default PWM_AUX_FUNC4 0
 param set-default PWM_AUX_FUNC5 0
 param set-default PWM_AUX_FUNC6 0
 param set-default PWM_AUX_FUNC7 0
 param set-default PWM_AUX_FUNC8 0
+
+param set-default PWM_AUX_MIN1 253 #AUX 1
+param set-default PWM_AUX_MIN2 253 #AUX 2
+
+param set-default PWM_AUX_MAX1 2200 #AUX 1
+param set-default PWM_AUX_MAX2 2200 #AUX 2
+
+param set-default PWM_AUX_DIS1 1100 #AUX 1
+param set-default PWM_AUX_DIS2 1100 #AUX 2
 
 #set PWM rates for AUX
 param set-default PWM_AUX_TIM0 400 #AUX 1-2
