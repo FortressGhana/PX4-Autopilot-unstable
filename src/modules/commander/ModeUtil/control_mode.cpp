@@ -123,7 +123,7 @@ void getVehicleControlMode(uint8_t nav_state, uint8_t vehicle_type,
 		vehicle_control_mode.flag_control_offboard_enabled = true;
 
 		// position control for position mode, and position lock
-		// velocity control for velocity mode
+		// velocity control for depth mode
 		if (offboard_control_mode.position) {
 			vehicle_control_mode.flag_control_manual_enabled = true;
 			vehicle_control_mode.flag_control_position_enabled = true;
