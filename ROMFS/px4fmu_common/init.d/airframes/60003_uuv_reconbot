@@ -165,8 +165,8 @@ param set-default PWM_AUX_FUNC6 0
 param set-default PWM_AUX_FUNC7 0
 param set-default PWM_AUX_FUNC8 0
 
-param set-default PWM_AUX_MIN1 253 #AUX 1
-param set-default PWM_AUX_MIN2 253 #AUX 2
+param set-default PWM_AUX_MIN1 1100 #AUX 1
+param set-default PWM_AUX_MIN2 1100 #AUX 2
 
 param set-default PWM_AUX_MAX1 2200 #AUX 1
 param set-default PWM_AUX_MAX2 2200 #AUX 2
