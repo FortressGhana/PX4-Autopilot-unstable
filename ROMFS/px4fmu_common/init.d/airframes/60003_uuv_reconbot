@@ -156,10 +156,10 @@ param set-default PWM_MAIN_DIS8 1250
 
 
 #Assign AUX motors
-param set-default PWM_AUX_FUNC1 0
-param set-default PWM_AUX_FUNC2 0
-param set-default PWM_AUX_FUNC3 301
-param set-default PWM_AUX_FUNC4 302
+param set-default PWM_AUX_FUNC1 301
+param set-default PWM_AUX_FUNC2 302
+param set-default PWM_AUX_FUNC3 0
+param set-default PWM_AUX_FUNC4 0
 param set-default PWM_AUX_FUNC5 0
 param set-default PWM_AUX_FUNC6 0
 param set-default PWM_AUX_FUNC7 0
