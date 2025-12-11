@@ -433,7 +433,7 @@ int Bar100::_read_sensor()
     // KellerLD formulas
     _P_bar = (static_cast<float>(P_raw) - 16384.0f) * (_P_max - _P_min) / 32768.0f + _P_min + _P_mode;
     _last_temperature = ((T_raw >> 4) - 24) * 0.05f - 50.0f;
-    _last_pressure = _P_bar * 100000.0f; // bar -> Pa
+    _last_pressure = _P_bar * 10000.0f; // bar -> Pa
 
     PX4_DEBUG("BAR100 conv: P_raw=%u P_bar=%.6f bar P_Pa=%.2f Pa T_raw=%u T_C=%.2f",
               P_raw, (double)_P_bar, (double)_last_pressure, T_raw, (double)_last_temperature);
