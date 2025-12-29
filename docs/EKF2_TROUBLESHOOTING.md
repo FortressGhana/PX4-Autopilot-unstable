@@ -1,5 +1,7 @@
 # EKF2 Troubleshooting Guide for UUV with External INS
 
+> **Note:** For motor mapping issues, see [UUV_MOTOR_MAPPING_ISSUES.md](UUV_MOTOR_MAPPING_ISSUES.md)
+
 This guide covers EKF2 diagnostics, troubleshooting, and tuning for underwater vehicles using the Boreas D90 INS as external vision input.
 
 ## Current Configuration
