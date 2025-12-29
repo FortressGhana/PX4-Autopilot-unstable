@@ -168,3 +168,6 @@ param set-default PWM_AUX_FUNC8 0
 #set PWM rates for AUX
 param set-default PWM_AUX_TIM0 400 #AUX 1-2
 param set-default PWM_AUX_TIM0 400 #AUX 3-4
+
+# disable joystick input
+param set-default COM_RC_IN_MODE 4

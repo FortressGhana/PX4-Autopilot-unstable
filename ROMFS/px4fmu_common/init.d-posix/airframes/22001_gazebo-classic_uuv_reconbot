@@ -1,0 +1,97 @@
+#!/bin/sh
+#
+# @name BlueROV2 Heavy Configuration
+#
+
+. ${R}etc/init.d/rc.uuv_defaults
+
+PX4_SIMULATOR=${PX4_SIMULATOR:=gazebo-classic}
+PX4_GZ_WORLD=${PX4_GZ_WORLD:=fortress_pool}
+PX4_SIM_MODEL=${PX4_SIM_MODEL:=reconbot}
+
+# Set parameters using `param` utility for SITL
+param set-default CA_AIRFRAME 7
+
+param set-default CA_ROTOR_COUNT 8
+param set-default CA_R_REV 255
+# Thruster 1: Left Front Horizontal
+param set-default CA_ROTOR0_AX 1.0
+param set-default CA_ROTOR0_AY 0.0
+param set-default CA_ROTOR0_AZ 0.0
+param set-default CA_ROTOR0_KM 0
+param set-default CA_ROTOR0_PX -0.0667
+param set-default CA_ROTOR0_PY 0.14116
+param set-default CA_ROTOR0_PZ 0.110
+
+# Thruster 2: Right Front Horizontal
+param set-default CA_ROTOR1_AX 1.0
+param set-default CA_ROTOR1_AY 0.0
+param set-default CA_ROTOR1_AZ 0.0
+param set-default CA_ROTOR1_KM 0
+param set-default CA_ROTOR1_PX -0.0667
+param set-default CA_ROTOR1_PY -0.13662
+param set-default CA_ROTOR1_PZ 0.110
+
+# Thruster 3: Front Vertical
+param set-default CA_ROTOR2_AX 0.0
+param set-default CA_ROTOR2_AY 1.0
+param set-default CA_ROTOR2_AZ 0.0
+param set-default CA_ROTOR2_KM 0
+param set-default CA_ROTOR2_PX 0.319
+param set-default CA_ROTOR2_PY 0.082
+param set-default CA_ROTOR2_PZ 0.168
+
+# Thruster 4: Rear Vertical
+param set-default CA_ROTOR3_AX 0.0
+param set-default CA_ROTOR3_AY 1.0
+param set-default CA_ROTOR3_AZ 0.0
+param set-default CA_ROTOR3_KM 0
+param set-default CA_ROTOR3_PX -0.261
+param set-default CA_ROTOR3_PY 0.082
+param set-default CA_ROTOR3_PZ 0.170
+
+# Thruster 5: Front Right Angled
+param set-default CA_ROTOR4_AX -1.05
+param set-default CA_ROTOR4_AY 0.0
+param set-default CA_ROTOR4_AZ 0.0
+param set-default CA_ROTOR4_KM 0
+param set-default CA_ROTOR4_PX 0.469
+param set-default CA_ROTOR4_PY 0.129
+param set-default CA_ROTOR4_PZ -0.1
+
+# Thruster 6: Front Left Angled
+param set-default CA_ROTOR5_AX 1.05
+param set-default CA_ROTOR5_AY 0.0
+param set-default CA_ROTOR5_AZ 0.0
+param set-default CA_ROTOR5_KM 0
+param set-default CA_ROTOR5_PX -0.469
+param set-default CA_ROTOR5_PY -0.129
+param set-default CA_ROTOR5_PZ -0.1
+
+# Thruster 7: Rear Left Angled
+param set-default CA_ROTOR6_AX 0.0
+param set-default CA_ROTOR6_AY 0.0
+param set-default CA_ROTOR6_AZ 0.0
+param set-default CA_ROTOR6_KM 0
+param set-default CA_ROTOR6_PX -0.415
+param set-default CA_ROTOR6_PY -0.129
+param set-default CA_ROTOR6_PZ -0.1
+
+# Thruster 8: Rear Right Angled
+param set-default CA_ROTOR7_AX -1.05
+param set-default CA_ROTOR7_AY 0.0
+param set-default CA_ROTOR7_AZ 0.0
+param set-default CA_ROTOR7_KM 0
+param set-default CA_ROTOR7_PX -0.415
+param set-default CA_ROTOR7_PY 0.129
+param set-default CA_ROTOR7_PZ -0.1
+
+param set-default PWM_MAIN_FUNC1 101
+param set-default PWM_MAIN_FUNC2 102
+param set-default PWM_MAIN_FUNC3 103
+param set-default PWM_MAIN_FUNC4 104
+param set-default PWM_MAIN_FUNC5 105
+param set-default PWM_MAIN_FUNC6 106
+param set-default PWM_MAIN_FUNC7 107
+param set-default PWM_MAIN_FUNC8 108
+
