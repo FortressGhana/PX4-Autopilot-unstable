@@ -5,10 +5,6 @@
 
 . ${R}etc/init.d/rc.uuv_defaults
 
-PX4_SIMULATOR=${PX4_SIMULATOR:=gazebo-classic}
-PX4_GZ_WORLD=${PX4_GZ_WORLD:=fortress_pool}
-PX4_SIM_MODEL=${PX4_SIM_MODEL:=reconbot}
-
 # Set parameters using `param` utility for SITL
 param set-default CA_AIRFRAME 7
 
