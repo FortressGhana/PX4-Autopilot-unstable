@@ -102,9 +102,11 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 	//get current rotation of vehicle
 	Quatf q_att(vehicle_attitude.q);
 
-	// --- Vertical measurement selection: prefer DVL altitude when fresh
-	float z_meas = vlocal_pos.z; // default fallback
-	float vz_meas_ned = vlocal_pos.vz;
+	// --- Measurement selection: prefer DVL when fresh and valid
+	float z_meas = vlocal_pos.z; // default fallback to EKF
+	float vx_meas = vlocal_pos.vx;
+	float vy_meas = vlocal_pos.vy;
+	float vz_meas = vlocal_pos.vz;
 	const hrt_abstime now = hrt_absolute_time();
 
 	bool dvl_ok = false;
@@ -113,14 +115,19 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 		dvl_ok = (dvl_age_s >= 0.0f) && (dvl_age_s <= _param_dvl_alt_max_age.get()) && PX4_ISFINITE(dvl.altitude);
 	}
 	if (dvl_ok) {
+		// Use DVL altitude for Z position
+		z_meas = -dvl.altitude; // DVL altitude is positive (distance to bottom), NED z is positive down
 
-		// add logging
-		PX4_INFO("Using DVL altitude");
-		z_meas = -dvl.altitude; // DVL altitude is opposite to local position z
+		// Waterlinked A50 outputs velocity in BODY frame (FRD)
+		// Rotate body-frame velocity to NED world frame
+		Vector3f dvl_vel_body(dvl.velocity[0], dvl.velocity[1], dvl.velocity[2]);
 
-		if (PX4_ISFINITE(dvl.velocity[2])) {
-            		vz_meas_ned = dvl.velocity[2];
-       		}
+		if (PX4_ISFINITE(dvl_vel_body(0)) && PX4_ISFINITE(dvl_vel_body(1)) && PX4_ISFINITE(dvl_vel_body(2))) {
+			Vector3f dvl_vel_ned = q_att.rotateVector(dvl_vel_body);
+			vx_meas = dvl_vel_ned(0);
+			vy_meas = dvl_vel_ned(1);
+			vz_meas = dvl_vel_ned(2);
+		}
 	}
 
 	Vector3f pos_err(pos_des(0) - vlocal_pos.x,
@@ -128,7 +135,7 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 			pos_des(2) - z_meas
 		);
 
-	Vector3f vel_world(vlocal_pos.vx, vlocal_pos.vy, vz_meas_ned); // vel in world frame
+	Vector3f vel_world(vx_meas, vy_meas, vz_meas); // vel in world frame, DVL when available
 	Vector3f vel_des_world = vel_des; // world frame desired velocity
 
 
