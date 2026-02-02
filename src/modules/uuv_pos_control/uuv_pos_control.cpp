@@ -117,17 +117,6 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 	if (dvl_ok) {
 		// Use DVL altitude for Z position
 		z_meas = -dvl.altitude; // DVL altitude is positive (distance to bottom), NED z is positive down
-
-		// Waterlinked A50 outputs velocity in BODY frame (FRD)
-		// Rotate body-frame velocity to NED world frame
-		Vector3f dvl_vel_body(dvl.velocity[0], dvl.velocity[1], dvl.velocity[2]);
-
-		if (PX4_ISFINITE(dvl_vel_body(0)) && PX4_ISFINITE(dvl_vel_body(1)) && PX4_ISFINITE(dvl_vel_body(2))) {
-			Vector3f dvl_vel_ned = q_att.rotateVector(dvl_vel_body);
-			vx_meas = dvl_vel_ned(0);
-			vy_meas = dvl_vel_ned(1);
-			vz_meas = dvl_vel_ned(2);
-		}
 	}
 
 	Vector3f pos_err(pos_des(0) - vlocal_pos.x,
@@ -141,7 +130,13 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 
 	Vector3f vel_err = vel_des_world - vel_world;
 
-	 // --- Z integrator (enabled by param)
+	// Reset integrator if Z error is too large (prevents windup from setpoint jumps)
+	const float max_z_error = 5.0f;  // meters
+	if (fabsf(pos_err(2)) > max_z_error) {
+		_pos_i_z = 0.0f;
+	}
+
+	// --- Z integrator (enabled by param)
 	if (_param_pose_z_i_enable.get() && dt > 0.0f && PX4_ISFINITE(pos_err(2))) {
 		_pos_i_z += pos_err(2) * dt * _param_pose_ki_z.get();
 		_pos_i_z = math::constrain(_pos_i_z, -_param_pose_i_max_z.get(), _param_pose_i_max_z.get());
@@ -343,12 +338,32 @@ void UUVPOSControl::Run()
 	/* update parameters from storage */
 	parameters_update();
 
+	// Check for mode transitions and reset integrator
+	const bool position_control_active = _vcontrol_mode.flag_armed &&
+					     (_vcontrol_mode.flag_control_position_enabled ||
+					      _vcontrol_mode.flag_control_altitude_enabled);
+
+	if (position_control_active && !_was_position_control_active) {
+		// Entering position/altitude control - reset integrator
+		_pos_i_z = 0.0f;
+	}
+
+	if (!position_control_active) {
+		// Not in position control - keep integrator zeroed
+		_pos_i_z = 0.0f;
+	}
+
+	_was_position_control_active = position_control_active;
+
 	//vehicle_attitude_s attitude;
 	vehicle_local_position_s vlocal_pos;
 	doppler_velocity_log_s dvl;
 
 	/* only run controller if local_pos changed */
 	if (_vehicle_local_position_sub.update(&vlocal_pos)) {
+		// Update DVL data
+		_doppler_velocity_log_sub.update(&dvl);
+
 		const float dt = math::constrain(((vlocal_pos.timestamp_sample - _last_run) * 1e-6f), 0.0002f, 0.02f);
 		_last_run = vlocal_pos.timestamp_sample;
 

@@ -118,6 +118,7 @@ private:
 	perf_counter_t	_loop_perf;
 	hrt_abstime _last_run{0};
 	float _pos_i_z{0.0f};
+	bool _was_position_control_active{false};
 
 
 	DEFINE_PARAMETERS(

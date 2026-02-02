@@ -255,4 +255,4 @@ PARAM_DEFINE_INT32(UUV_USE_EXT_W, 1);
 /**
  * Maximum age (in seconds) for external angular velocity
  */
-PARAM_DEFINE_FLOAT(UUV_EXTW_MAX_AGE, 0.05f);
+PARAM_DEFINE_FLOAT(UUV_EXTW_MAX_AGE, 0.02f);

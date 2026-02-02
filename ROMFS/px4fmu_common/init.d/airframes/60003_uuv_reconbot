@@ -168,19 +168,3 @@ param set-default PWM_AUX_FUNC8 0
 #set PWM rates for AUX
 param set-default PWM_AUX_TIM0 400 #AUX 1-2
 param set-default PWM_AUX_TIM1 400 #AUX 3-4
-
-# disable joystick input
-param set-default COM_RC_IN_MODE 4
-
-# Attitude tuning - faster correction for lateral thruster coupling
-param set-default UUV_ROLL_P 6.0
-param set-default UUV_ROLL_D 2.0
-param set-default UUV_YAW_P 5.0
-param set-default UUV_YAW_D 2.5
-
-# Position tuning - gentler sway to reduce coupling effects
-param set-default UUV_GAIN_Y_P 0.7
-param set-default UUV_GAIN_Y_D 0.3
-
-# Allow more torque headroom for attitude corrections
-param set-default UUV_TORQUE_SAT 0.5
