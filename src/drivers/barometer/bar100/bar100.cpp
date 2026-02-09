@@ -49,7 +49,7 @@ Bar100::Bar100(const I2CSPIDriverConfig &config) :
     _measure_perf(perf_alloc(PC_ELAPSED, "bar100_measure")),
     _comms_errors(perf_alloc(PC_COUNT, "bar100_com_err"))
 {
-    PX4_ERR("Bar100 constructor called");
+    PX4_INFO("Bar100 constructor called");
 }
 
 Bar100::~Bar100()
@@ -249,74 +249,32 @@ bool Bar100::_read_registers(uint8_t reg, uint8_t *data, unsigned len)
 // Robust helper: read a single MTP 16-bit value (write mtp address, read 3 bytes: status, hi, lo)
 bool Bar100::_read_mtp16(uint8_t mtp_addr, uint16_t &val)
 {
-    const unsigned MAX_ATTEMPTS = 3;
-    const useconds_t T_SETUP_US = 1500;   // small setup delay
-    const useconds_t T_INTER_US = 2000;   // inter-read gap
-    uint8_t buf[3] = {0};
-    int ret = PX4_ERROR;
+    uint8_t buf[3] = {};
 
-    for (unsigned attempt = 0; attempt < MAX_ATTEMPTS; ++attempt) {
+    // IMPORTANT: do NOT trigger measurement before MTP
+    // Keller requires idle state
 
-        // Attempt A: combined transaction (write addr then read 3 bytes)
-        {
-            uint8_t addr = mtp_addr;
-            ret = transfer(&addr, 1, buf, sizeof(buf));
-            if (ret == PX4_OK) {
-                PX4_DEBUG("BAR100 MTP[0x%02X] combined attempt %u raw: %02X %02X %02X",
-                         mtp_addr, attempt+1, buf[0], buf[1], buf[2]);
-                if (!(buf[1] == 0x00 && buf[2] == 0x00)) {
-                    val = (static_cast<uint16_t>(buf[1]) << 8) | static_cast<uint16_t>(buf[2]);
-                    px4_usleep(T_INTER_US);
-                    return true;
-                }
-                // if data bytes are zero, fall through to separate flow
-            } else {
-                PX4_DEBUG("BAR100 MTP combined transfer failed for 0x%02X attempt %u (ret=%d)",
-                         mtp_addr, attempt+1, ret);
-            }
-        }
-
-        // small pause then try separate write/read
-        px4_usleep(T_SETUP_US);
-
-        // Attempt B: write addr, then read 3 bytes
-        {
-            uint8_t cmd = mtp_addr;
-            ret = transfer(&cmd, 1, nullptr, 0);
-            if (ret != PX4_OK) {
-                PX4_DEBUG("BAR100 MTP write-only failed for 0x%02X attempt %u (ret=%d)",
-                         mtp_addr, attempt+1, ret);
-                px4_usleep(T_INTER_US);
-                continue;
-            }
-
-            // give the device time to prepare response
-            px4_usleep(T_SETUP_US);
-
-            memset(buf, 0, sizeof(buf));
-            ret = transfer(nullptr, 0, buf, sizeof(buf));
-            if (ret == PX4_OK) {
-                PX4_DEBUG("BAR100 MTP[0x%02X] separate attempt %u raw: %02X %02X %02X",
-                         mtp_addr, attempt+1, buf[0], buf[1], buf[2]);
-                if (!(buf[1] == 0x00 && buf[2] == 0x00)) {
-                    val = (static_cast<uint16_t>(buf[1]) << 8) | static_cast<uint16_t>(buf[2]);
-                    px4_usleep(T_INTER_US);
-                    return true;
-                }
-            } else {
-                PX4_DEBUG("BAR100 MTP read-only failed for 0x%02X attempt %u (ret=%d)",
-                         mtp_addr, attempt+1, ret);
-            }
-        }
-
-        px4_usleep(5000);
+    // Write MTP address
+    if (transfer(&mtp_addr, 1, nullptr, 0) != PX4_OK) {
+        return false;
     }
 
-    PX4_ERR("BAR100: failed to read MTP[0x%02X] after %u attempts (last ret=%d) - raw: %02X %02X %02X",
-           mtp_addr, MAX_ATTEMPTS, ret, buf[0], buf[1], buf[2]);
+    // Keller needs time to fetch EEPROM
+    px4_usleep(5000);
 
-    perf_count(_comms_errors);
-    return false;
+    // Read status + data
+    if (transfer(nullptr, 0, buf, sizeof(buf)) != PX4_OK) {
+        return false;
+    }
+
+    // Status must be 0x00
+    if (buf[0] != 0x00) {
+        PX4_WARN("BAR100 MTP busy status=0x%02X", buf[0]);
+        return false;
+    }
+
+    val = (uint16_t(buf[1]) << 8) | buf[2];
+    return true;
 }
 
 // Try to read memory map; if it fails we fall back to defaults (but return true if we set defaults)
@@ -401,32 +359,25 @@ bool Bar100::_read_memory_map()
 int Bar100::_read_sensor()
 {
     uint8_t cmd = BAR100_REQUEST_CMD;
-    uint8_t buf[BAR100_MEASUREMENT_BYTES] = {0};
+    uint8_t buf[5] = {};
 
-    // Trigger measurement
+    // Start conversion
     if (transfer(&cmd, 1, nullptr, 0) != PX4_OK) {
-        perf_count(_comms_errors);
-        PX4_ERR("BAR100: failed to send measure cmd");
         return PX4_ERROR;
     }
 
-    // Wait conversion time; Keller LD uses ~9ms, use 15ms for margin
-    px4_usleep(15000);
+    // Wait conversion time
+    px4_usleep(10000);
 
+    // Read result ONCE
     if (transfer(nullptr, 0, buf, sizeof(buf)) != PX4_OK) {
-        perf_count(_comms_errors);
-        PX4_ERR("BAR100: failed to read measurement");
         return PX4_ERROR;
     }
 
-    PX4_DEBUG("BAR100 raw measurement: %02x %02x %02x %02x %02x",
-              buf[0], buf[1], buf[2], buf[3], buf[4]);
-
-    uint16_t P_raw = (static_cast<uint16_t>(buf[1]) << 8) | static_cast<uint16_t>(buf[2]);
-    uint16_t T_raw = (static_cast<uint16_t>(buf[3]) << 8) | static_cast<uint16_t>(buf[4]);
+    uint16_t P_raw = (buf[1] << 8) | buf[2];
+    uint16_t T_raw = (buf[3] << 8) | buf[4];
 
     if (P_raw == 0 || T_raw == 0) {
-        PX4_WARN("BAR100 invalid measurement: P_raw=%u T_raw=%u", P_raw, T_raw);
         return PX4_ERROR;
     }
 
@@ -437,6 +388,12 @@ int Bar100::_read_sensor()
 
     PX4_DEBUG("BAR100 conv: P_raw=%u P_bar=%.6f bar P_Pa=%.2f Pa T_raw=%u T_C=%.2f",
               P_raw, (double)_P_bar, (double)_last_pressure, T_raw, (double)_last_temperature);
+
+    // Request a new measurement for the next cycle; best-effort — don't fail sample if this write fails
+    if (transfer(&cmd, 1, nullptr, 0) != PX4_OK) {
+        perf_count(_comms_errors);
+        PX4_DEBUG("BAR100: failed to send measure cmd (next conversion)");
+    }
 
     return PX4_OK;
 }
