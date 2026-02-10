@@ -69,7 +69,7 @@ int Bar100::init()
 
     // Try to read memory map; if it fails, fall back to safe defaults so driver can start
     if (!_read_memory_map()) {
-        PX4_WARN("BAR100 memory map read failed - using safe defaults");
+        PX4_INFO("BAR100 memory map read failed - using safe defaults");
         // safe defaults: 0..10 bar, vented gauge offset ~1.01325 bar
         _P_min = 0.0f;
         _P_max = 10.0f;
@@ -115,7 +115,7 @@ int Bar100::probe()
                     if (P_raw != 0 || T_raw != 0) {
                         return PX4_OK;
                     } else {
-                        PX4_WARN("BAR100 probe got zeroed data (P_raw=%u T_raw=%u), trying alternate probe", P_raw, T_raw);
+                        PX4_INFO("BAR100 probe got zeroed data (P_raw=%u T_raw=%u), trying alternate probe", P_raw, T_raw);
                     }
                 } else {
                     PX4_DEBUG("BAR100 read after trigger failed (ret=%d) attempt %u", ret, attempt + 1);
@@ -140,7 +140,7 @@ int Bar100::probe()
                 if (P_raw != 0 || T_raw != 0) {
                     return PX4_OK;
                 } else {
-                    PX4_WARN("BAR100 read-only returned zeros, trying write-then-read");
+                    PX4_INFO("BAR100 read-only returned zeros, trying write-then-read");
                 }
             } else {
                 PX4_DEBUG("BAR100 read-only failed (ret=%d) attempt %u", ret, attempt + 1);
@@ -165,7 +165,7 @@ int Bar100::probe()
                     if (P_raw != 0 || T_raw != 0) {
                         return PX4_OK;
                     } else {
-                        PX4_WARN("BAR100 0x00-read returned zeros");
+                        PX4_INFO("BAR100 0x00-read returned zeros");
                     }
                 }
             }
@@ -256,7 +256,7 @@ bool Bar100::_read_mtp16(uint8_t mtp_addr, uint16_t &val)
 
     // Write MTP address
     if (transfer(&mtp_addr, 1, nullptr, 0) != PX4_OK) {
-        PX4_WARN("BAR100 MTP write addr 0x%02X failed", mtp_addr);
+        PX4_INFO("BAR100 MTP write addr 0x%02X failed", mtp_addr);
         return false;
     }
 
@@ -265,7 +265,7 @@ bool Bar100::_read_mtp16(uint8_t mtp_addr, uint16_t &val)
 
     // Read status + data
     if (transfer(nullptr, 0, buf, sizeof(buf)) != PX4_OK) {
-        PX4_WARN("BAR100 MTP read addr 0x%02X failed", mtp_addr);
+        PX4_INFO("BAR100 MTP read addr 0x%02X failed", mtp_addr);
         return false;
     }
 
@@ -273,7 +273,7 @@ bool Bar100::_read_mtp16(uint8_t mtp_addr, uint16_t &val)
 
     // Status must be 0x00
     if (buf[0] != 0x00) {
-        PX4_WARN("BAR100 MTP busy status=0x%02X for reg 0x%02X", buf[0], mtp_addr);
+        PX4_INFO("BAR100 MTP busy status=0x%02X for reg 0x%02X", buf[0], mtp_addr);
         return false;
     }
 
@@ -292,7 +292,7 @@ bool Bar100::_read_memory_map()
 
     if (!_read_mtp16(BAR100_REG_CUST_ID0, cust0) ||
         !_read_mtp16(BAR100_REG_CUST_ID1, cust1)) {
-        PX4_WARN("BAR100: CUST_ID MTP reads failed");
+        PX4_INFO("BAR100: CUST_ID MTP reads failed");
         // fall back to defaults so that driver can start
         _equipment = 0;
         _code = 0;
@@ -312,7 +312,7 @@ bool Bar100::_read_memory_map()
         !_read_mtp16(BAR100_REG_SCALING2, scaling2) ||
         !_read_mtp16(BAR100_REG_SCALING3, scaling3) ||
         !_read_mtp16(BAR100_REG_SCALING4, scaling4)) {
-        PX4_WARN("BAR100: scaling MTP reads failed - using defaults");
+        PX4_INFO("BAR100: scaling MTP reads failed - using defaults");
         _P_min = 0.0f;
         _P_max = 10.0f;
         _P_mode = 1.01325f;
@@ -350,7 +350,7 @@ bool Bar100::_read_memory_map()
     // Validate: if calibration looks invalid, fall back to safe defaults
     const float EPS = 1e-6f;
     if (!PX4_ISFINITE(_P_min) || !PX4_ISFINITE(_P_max) || _P_min >= _P_max || fabsf(_P_min) < EPS || fabsf(_P_max) < EPS) {
-        PX4_WARN("BAR100: bad calibration (Pmin=%.6f Pmax=%.6f) - using defaults", (double)_P_min, (double)_P_max);
+        PX4_INFO("BAR100: bad calibration (Pmin=%.6f Pmax=%.6f) - using defaults", (double)_P_min, (double)_P_max);
         _P_min = 0.0f;
         _P_max = 10.0f;
         _P_mode = 1.01325f;
@@ -381,7 +381,7 @@ int Bar100::_read_sensor()
     uint16_t T_raw = (buf[3] << 8) | buf[4];
 
     if (P_raw == 0 || T_raw == 0) {
-        PX4_WARN("BAR100: zero reading rejected P_raw=%u T_raw=%u", P_raw, T_raw);
+        PX4_INFO("BAR100: zero reading rejected P_raw=%u T_raw=%u", P_raw, T_raw);
         return PX4_ERROR;
     }
 
