@@ -256,6 +256,7 @@ bool Bar100::_read_mtp16(uint8_t mtp_addr, uint16_t &val)
 
     // Write MTP address
     if (transfer(&mtp_addr, 1, nullptr, 0) != PX4_OK) {
+        PX4_WARN("BAR100 MTP write addr 0x%02X failed", mtp_addr);
         return false;
     }
 
@@ -264,12 +265,15 @@ bool Bar100::_read_mtp16(uint8_t mtp_addr, uint16_t &val)
 
     // Read status + data
     if (transfer(nullptr, 0, buf, sizeof(buf)) != PX4_OK) {
+        PX4_WARN("BAR100 MTP read addr 0x%02X failed", mtp_addr);
         return false;
     }
 
+    PX4_INFO("BAR100 MTP reg 0x%02X: status=0x%02X data=[0x%02X 0x%02X]", mtp_addr, buf[0], buf[1], buf[2]);
+
     // Status must be 0x00
     if (buf[0] != 0x00) {
-        PX4_WARN("BAR100 MTP busy status=0x%02X", buf[0]);
+        PX4_WARN("BAR100 MTP busy status=0x%02X for reg 0x%02X", buf[0], mtp_addr);
         return false;
     }
 
@@ -281,7 +285,8 @@ bool Bar100::_read_mtp16(uint8_t mtp_addr, uint16_t &val)
 bool Bar100::_read_memory_map()
 {
     // Do NOT trigger a measurement before MTP reads — Keller requires idle state
-    px4_usleep(10000); // allow sensor to settle if it was previously converting
+    // probe() may have sent 0xAC commands, so wait for any conversion to complete
+    px4_usleep(150000); // 150ms — AP driver uses same delay after cal reads
 
     uint16_t cust0 = 0, cust1 = 0;
 
