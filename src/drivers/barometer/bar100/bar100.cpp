@@ -280,10 +280,8 @@ bool Bar100::_read_mtp16(uint8_t mtp_addr, uint16_t &val)
 // Try to read memory map; if it fails we fall back to defaults (but return true if we set defaults)
 bool Bar100::_read_memory_map()
 {
-    // Trigger a measurement to ensure device awake
-    uint8_t trigger = BAR100_REQUEST_CMD;
-    transfer(&trigger, 1, nullptr, 0);
-    px4_usleep(10000);
+    // Do NOT trigger a measurement before MTP reads — Keller requires idle state
+    px4_usleep(10000); // allow sensor to settle if it was previously converting
 
     uint16_t cust0 = 0, cust1 = 0;
 
