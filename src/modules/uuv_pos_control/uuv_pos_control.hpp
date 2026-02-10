@@ -139,7 +139,8 @@ private:
 		(ParamFloat<px4::params::POSE_KI_Z>) _param_pose_ki_z,
 		(ParamFloat<px4::params::POSE_I_MAX_Z>) _param_pose_i_max_z,
 		(ParamInt<px4::params::POSE_Z_I_ENABLE>) _param_pose_z_i_enable,
-		(ParamFloat<px4::params::DVL_ALT_MAX_AGE>) _param_dvl_alt_max_age
+		(ParamFloat<px4::params::DVL_ALT_MAX_AGE>) _param_dvl_alt_max_age,
+		(ParamFloat<px4::params::UUV_BUOY_COMP>) _param_buoy_comp
 
 	)
 
