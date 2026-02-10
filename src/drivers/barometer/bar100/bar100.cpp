@@ -378,6 +378,7 @@ int Bar100::_read_sensor()
     uint16_t T_raw = (buf[3] << 8) | buf[4];
 
     if (P_raw == 0 || T_raw == 0) {
+        PX4_WARN("BAR100: zero reading rejected P_raw=%u T_raw=%u", P_raw, T_raw);
         return PX4_ERROR;
     }
 
@@ -386,8 +387,9 @@ int Bar100::_read_sensor()
     _last_temperature = ((T_raw >> 4) - 24) * 0.05f - 50.0f;
     _last_pressure = _P_bar * 100000.0f; // bar -> Pa
 
-    PX4_DEBUG("BAR100 conv: P_raw=%u P_bar=%.6f bar P_Pa=%.2f Pa T_raw=%u T_C=%.2f",
-              P_raw, (double)_P_bar, (double)_last_pressure, T_raw, (double)_last_temperature);
+    PX4_INFO("BAR100: P_raw=%u T_raw=%u P_min=%.4f P_max=%.4f P_mode=%.4f P_bar=%.6f P_Pa=%.2f T_C=%.2f",
+             P_raw, T_raw, (double)_P_min, (double)_P_max, (double)_P_mode, (double)_P_bar,
+             (double)_last_pressure, (double)_last_temperature);
 
     // Request a new measurement for the next cycle; best-effort — don't fail sample if this write fails
     if (transfer(&cmd, 1, nullptr, 0) != PX4_OK) {
