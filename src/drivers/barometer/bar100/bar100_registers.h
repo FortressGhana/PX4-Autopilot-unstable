@@ -33,7 +33,7 @@
 /**
  * @file bar100_registers.h
  *
- * Shared defines for the BAR100 I2C driver.
+ * Shared defines for the BAR100 I2C driver (Keller LD series).
  */
 
 #pragma once
@@ -53,21 +53,8 @@
 #define BAR100_REG_SCALING3 0x15
 #define BAR100_REG_SCALING4 0x16
 
-// Number of bytes to read in memory map transactions
-#define BAR100_NUM_REGISTERS 7
-
-// Measurement result size
+// Measurement result size: status + P_msb + P_lsb + T_msb + T_lsb
 #define BAR100_MEASUREMENT_BYTES 5
 
-// Typical conversion delay (microseconds)
-#define BAR100_CONVERSION_INTERVAL_US 9000
-
-// BAR100 raw data packet structure
-//  Byte 0: Status
-//  Byte 1–2: Pressure (uint16)
-//  Byte 3–4: Temperature (uint16)
-struct bar100_raw_data_t {
-    uint8_t status;
-    uint16_t pressure_raw;
-    uint16_t temperature_raw;
-};
+// Conversion time ~10ms per datasheet, use 20ms interval for 50Hz (matches AP driver)
+#define BAR100_CONVERSION_INTERVAL_US 20000
