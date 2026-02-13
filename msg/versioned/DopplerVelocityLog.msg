@@ -2,26 +2,32 @@
 # This message contains the data from a DVL sensor, which is used to measure the velocity
 # of a vehicle relative to the seafloor or water column.
 
-uint64 timestamp		# time since system start (microseconds)
+uint64 timestamp		                        # time since system start (microseconds)
 
-float32 altitude
+float32 altitude                                # Altitude from base
 
-float32[3] velocity     	   # Velocity along x, y, z
+float32[3] velocity                             # Velocity along x, y, z
 
-float32 smg                         # Speed Made Good, the speed of the vehicle relative to the solution (m/s)
+float32[3] position                             # Dead reckoning position along x, y, z
 
-bool velocity_valid                 # Is the velocity value valid
+float32[2] orientation                          # Pitch and Roll
 
-float32 fom                         # Figure of merit, a measure of the accuracy of the velocities (m/s)
+float32 heading                                 # Heading
 
-bool water_mode_supported           # If the water mode is supported
+float32 smg                                     # Speed Made Good, the speed of the vehicle relative to the solution (m/s)
 
-bool is_water_tracking_enabled      # If the water mode is enabled
+bool velocity_valid                             # Is the velocity value valid
 
-bool[4] transducer_beam_validity    # The beam validity for each of the transducers
+float32 fom                                     # Figure of merit, a measure of the accuracy of the velocities (m/s)
 
-bool is_dvl_beam_valid              # 3 of the 4 beams have to be valid for this to be true
+bool water_mode_supported                       # If the water mode is supported
 
-bool is_velocity_realistic          # Velocity values are within physical limits
+bool is_water_tracking_enabled                  # If the water mode is enabled
 
-float32[3] covariance               # covariance readings of velocity
+bool[4] transducer_beam_validity                # The beam validity for each of the transducers
+
+bool is_dvl_beam_valid                          # 3 of the 4 beams have to be valid for this to be true
+
+bool is_velocity_realistic                      # Velocity values are within physical limits
+
+float32[3] covariance               		# covariance readings of velocity
