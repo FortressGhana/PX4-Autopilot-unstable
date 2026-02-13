@@ -7,8 +7,8 @@
 #
 # @output Motor1 bow starboard canted thruster (60.00° from horizontal, thrust down-port)
 # @output Motor2 bow port canted thruster (60.00° from horizontal, thrust down-starboard)
-# @output Motor3 stern starboard canted thruster (60.06° from horizontal, thrust up-starboard)
-# @output Motor4 stern port canted thruster (60.06° from horizontal, thrust up-port)
+# @output Motor3 stern starboard canted thruster (60.06° from horizontal, thrust down-port)
+# @output Motor4 stern port canted thruster (60.06° from horizontal, thrust down-starboard)
 # @output Motor5 mid starboard forward thruster (surge)
 # @output Motor6 mid port forward thruster (surge)
 # @output Motor7 forward port lateral thruster (thrust starboard)
@@ -71,16 +71,16 @@ param set-default CA_ROTOR1_PY -0.1369
 param set-default CA_ROTOR1_PZ -0.1002
 
 param set-default CA_ROTOR2_AX 0
-param set-default CA_ROTOR2_AY 0.4991
-param set-default CA_ROTOR2_AZ -0.8665
+param set-default CA_ROTOR2_AY -0.4991
+param set-default CA_ROTOR2_AZ 0.8665
 param set-default CA_ROTOR2_KM 0
 param set-default CA_ROTOR2_PX -0.4567
 param set-default CA_ROTOR2_PY 0.1326
 param set-default CA_ROTOR2_PZ -0.0996
 
 param set-default CA_ROTOR3_AX 0
-param set-default CA_ROTOR3_AY -0.4991
-param set-default CA_ROTOR3_AZ -0.8665
+param set-default CA_ROTOR3_AY 0.4991
+param set-default CA_ROTOR3_AZ 0.8665
 param set-default CA_ROTOR3_KM 0
 param set-default CA_ROTOR3_PX -0.4567
 param set-default CA_ROTOR3_PY -0.1384
