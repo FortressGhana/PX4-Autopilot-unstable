@@ -146,3 +146,22 @@ PARAM_DEFINE_FLOAT(POSE_I_MAX_Z, 0.0f);
  * @group UUV Position Control
  */
 PARAM_DEFINE_FLOAT(DVL_ALT_MAX_AGE, 1.0f);
+
+/**
+ * Net buoyancy force compensation in Z axis (NED)
+ *
+ * Feedforward force applied in world-frame Z to compensate for net buoyancy.
+ * Positive values compensate for a negatively buoyant (sinking) vehicle by
+ * commanding upward thrust. Set to the net weight-minus-buoyancy force in
+ * Newtons divided by the vehicle's maximum vertical thrust in Newtons,
+ * giving a normalized value in the range [-1, 1].
+ *
+ * Example: vehicle sinks with 9.81N net force, max vertical thrust is 130.9N
+ * (after efficiency and thruster cant angle), set to -0.075 (negative Z in NED = upward).
+ *
+ * @min -1.0
+ * @max 1.0
+ * @decimal 3
+ * @group UUV Position Control
+ */
+PARAM_DEFINE_FLOAT(UUV_BUOY_COMP, -0.075f);

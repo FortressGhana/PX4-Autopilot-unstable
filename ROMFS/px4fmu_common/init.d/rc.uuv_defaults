@@ -26,8 +26,11 @@ param set-default ATT_EXT_HDG_M 1
 param set-default EKF2_EV_CTRL 15
 param set-default EKF2_EV_DELAY 60
 param set-default EKF2_GPS_CTRL 0
-param set-default EKF2_HGT_REF 3 #Determines the reference source of height data used by the EKF
-param set EKF2_BARO_CTRL 0 # Disable barometer for height (underwater it's useless)
+
+# Height: use barometer (BAR100) for depth reference
+param set-default EKF2_HGT_REF 0
+param set-default EKF2_BARO_CTRL 1
+
 param set EKF2_MAG_TYPE 5  # 5 = None (use external yaw)
 param set-default EKF2_EV_NOISE_MD 0
 param set-default EKF2_EVV_NOISE 0.05
@@ -46,20 +49,25 @@ param set-default UUV_STAB_MODE 1
 # disable joystick input
 param set-default COM_RC_IN_MODE 4
 
-# Attitude tuning - faster correction for lateral thruster coupling
+# --- Attitude tuning ---
 param set-default UUV_ROLL_P 6.0
-param set-default UUV_ROLL_D 2.0
+param set-default UUV_ROLL_D 1.0
 param set-default UUV_YAW_P 5.0
-param set-default UUV_YAW_D 2.5
+param set-default UUV_YAW_D 1.5
 
-# Position tuning - gentler sway to reduce coupling effects
-param set-default UUV_GAIN_Y_P 0.7
+# --- Position tuning ---
+param set-default UUV_GAIN_X_P 2.0
+param set-default UUV_GAIN_X_D 0.2
+param set-default UUV_GAIN_Y_P 1.5
 param set-default UUV_GAIN_Y_D 0.3
+param set-default UUV_GAIN_Z_P 2.0
+param set-default UUV_GAIN_Z_D 0.2
 
-# Allow more torque headroom for attitude corrections
-param set-default UUV_TORQUE_SAT 0.5
+# --- Saturation ---
+param set-default UUV_TORQUE_SAT 1.0
+param set-default UUV_THRUST_SAT 1.0
 
 # Pixhawk IMU position relative to COG (body FRD frame)
-param set-default EKF2_IMU_POS_X 0.0113    # Pixhawk 10cm forward of COG
+param set-default EKF2_IMU_POS_X 0.0113
 param set-default EKF2_IMU_POS_Y 0.0762
-param set-default EKF2_IMU_POS_Z -0.0472   # Pixhawk 5cm above COG
+param set-default EKF2_IMU_POS_Z -0.0472

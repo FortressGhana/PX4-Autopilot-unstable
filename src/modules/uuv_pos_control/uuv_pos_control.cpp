@@ -163,6 +163,9 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 		);
 	}
 
+	// Buoyancy feedforward compensation in world-frame Z (NED: negative = upward)
+	p_control_output(2) += _param_buoy_comp.get();
+
 	Vector3f rotated_input = q_att.rotateVectorInverse(p_control_output); //rotate the coord.sys (from world to body)
 
 	_attitude_setpoint.timestamp = hrt_absolute_time();
