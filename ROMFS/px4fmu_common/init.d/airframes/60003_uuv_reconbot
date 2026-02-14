@@ -102,21 +102,21 @@ param set-default CA_ROTOR5_PX 0.0773
 param set-default CA_ROTOR5_PY -0.1390
 param set-default CA_ROTOR5_PZ 0.1183
 
-param set-default CA_ROTOR6_AX 0
-param set-default CA_ROTOR6_AY 1
-param set-default CA_ROTOR6_AZ 0
-param set-default CA_ROTOR6_KM 0
-param set-default CA_ROTOR6_PX 0.2743
-param set-default CA_ROTOR6_PY -0.0945
-param set-default CA_ROTOR6_PZ 0.1793
+# param set-default CA_ROTOR6_AX 0
+# param set-default CA_ROTOR6_AY 1
+# param set-default CA_ROTOR6_AZ 0
+# param set-default CA_ROTOR6_KM 0
+# param set-default CA_ROTOR6_PX 0.2743
+# param set-default CA_ROTOR6_PY -0.0945
+# param set-default CA_ROTOR6_PZ 0.1793
 
-param set-default CA_ROTOR7_AX 0
-param set-default CA_ROTOR7_AY -1
-param set-default CA_ROTOR7_AZ 0
-param set-default CA_ROTOR7_KM 0
-param set-default CA_ROTOR7_PX -0.3027
-param set-default CA_ROTOR7_PY -0.0945
-param set-default CA_ROTOR7_PZ 0.1793
+# param set-default CA_ROTOR7_AX 0
+# param set-default CA_ROTOR7_AY -1
+# param set-default CA_ROTOR7_AZ 0
+# param set-default CA_ROTOR7_KM 0
+# param set-default CA_ROTOR7_PX -0.3027
+# param set-default CA_ROTOR7_PY -0.0945
+# param set-default CA_ROTOR7_PZ 0.1793
 
 param set-default PWM_MAIN_FUNC1 101
 param set-default PWM_MAIN_FUNC2 102
