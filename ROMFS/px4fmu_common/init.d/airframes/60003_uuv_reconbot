@@ -51,7 +51,7 @@ param set-default COM_POSCTL_NAVL 2
 param set-default FD_FAIL_P 0
 param set-default FD_FAIL_R 0
 
-param set-default CA_ROTOR_COUNT 8
+param set-default CA_ROTOR_COUNT 6
 param set-default CA_R_REV 255
 
 param set-default CA_ROTOR0_AX 0
