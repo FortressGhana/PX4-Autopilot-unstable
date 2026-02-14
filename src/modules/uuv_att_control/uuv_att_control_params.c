@@ -256,3 +256,18 @@ PARAM_DEFINE_INT32(UUV_USE_EXT_W, 1);
  * Maximum age (in seconds) for external angular velocity
  */
 PARAM_DEFINE_FLOAT(UUV_EXTW_MAX_AGE, 0.02f);
+
+/**
+ * Surge-pitch feedforward compensation gain
+ *
+ * Feedforward pitch torque proportional to surge thrust to compensate
+ * for nose-down pitch coupling from surge thrusters mounted below CG.
+ * Set to the vertical offset of the surge thrusters from CG (meters),
+ * or 0 to rely solely on the control allocator coupling compensation.
+ *
+ * @min 0.0
+ * @max 0.5
+ * @decimal 3
+ * @group UUV Attitude Control
+ */
+PARAM_DEFINE_FLOAT(UUV_SURGE_PFF, 0.0f);

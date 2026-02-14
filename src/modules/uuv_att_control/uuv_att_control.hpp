@@ -166,7 +166,8 @@ private:
 		(ParamFloat<px4::params::UUV_THRUST_SAT>) _param_thrust_sat,
 		(ParamFloat<px4::params::UUV_SP_MAX_AGE>) _param_setpoint_max_age,
 		(ParamInt<px4::params::UUV_USE_EXT_W>)    _param_use_ext_w,
-		(ParamFloat<px4::params::UUV_EXTW_MAX_AGE>) _param_extw_max_age_s
+		(ParamFloat<px4::params::UUV_EXTW_MAX_AGE>) _param_extw_max_age_s,
+		(ParamFloat<px4::params::UUV_SURGE_PFF>) _param_surge_pitch_ff
 
 	)
 

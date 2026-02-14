@@ -52,6 +52,8 @@ param set-default COM_RC_IN_MODE 4
 # --- Attitude tuning ---
 param set-default UUV_ROLL_P 6.0
 param set-default UUV_ROLL_D 1.0
+param set-default UUV_PITCH_P 8.0
+param set-default UUV_PITCH_D 2.5
 param set-default UUV_YAW_P 8.0
 param set-default UUV_YAW_D 2.5
 
@@ -62,6 +64,11 @@ param set-default UUV_GAIN_Y_P 1.5
 param set-default UUV_GAIN_Y_D 0.3
 param set-default UUV_GAIN_Z_P 2.0
 param set-default UUV_GAIN_Z_D 0.2
+
+# --- Depth hold integrator ---
+param set-default POSE_Z_I_ENABLE 1
+param set-default POSE_KI_Z 0.3
+param set-default POSE_I_MAX_Z 0.2
 
 # --- Saturation ---
 param set-default UUV_TORQUE_SAT 1.0

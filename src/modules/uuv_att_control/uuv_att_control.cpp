@@ -210,6 +210,12 @@ void UUVAttitudeControl::control_attitude_geo(const vehicle_attitude_s &attitude
 		float pitch_u = torques(1);
 		float yaw_u = torques(2);
 
+		// Feedforward: compensate pitch coupling from surge thrusters below CG
+		const float surge_pff = _param_surge_pitch_ff.get();
+
+		if (surge_pff > FLT_EPSILON) {
+			pitch_u -= thrust_x * surge_pff;
+		}
 
 		constrain_actuator_commands(roll_u, pitch_u, yaw_u, thrust_x, thrust_y, thrust_z);
 
@@ -228,6 +234,12 @@ void UUVAttitudeControl::control_attitude_geo(const vehicle_attitude_s &attitude
 		float pitch_u = torques(1);
 		float yaw_u = torques(2);
 
+		// Feedforward: compensate pitch coupling from surge thrusters below CG
+		const float surge_pff = _param_surge_pitch_ff.get();
+
+		if (surge_pff > FLT_EPSILON) {
+			pitch_u -= thrust_x * surge_pff;
+		}
 
 		constrain_actuator_commands(roll_u, pitch_u, yaw_u, thrust_x, thrust_y, thrust_z);
 	}
