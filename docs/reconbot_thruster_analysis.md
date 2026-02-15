@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document provides a technical analysis of the 8-thruster configuration for the ReconBot UUV, examining placement decisions, control implications, potential drawbacks, and open questions for the team to address.
+This document provides a technical analysis of the 8-thruster configuration for the ReconBot UUV, examining placement decisions, control implications, and remaining concerns. The current configuration represents a significant improvement over previous iterations, with symmetric lever arms, same-direction canted thrusters, and near-perfect port/starboard symmetry.
 
 ---
 
@@ -12,135 +12,128 @@ This document provides a technical analysis of the 8-thruster configuration for 
 
 | Thruster Group | Thrusters | Primary DOF | Mounting |
 |----------------|-----------|-------------|----------|
-| Surge | T5, T6 | Forward/Backward (X) | Side-mounted, forward-facing |
-| Sway | T7, T8 | Left/Right (Y) | Top-mounted, lateral-facing |
-| Heave/Attitude | T1, T2, T3, T4 | Up/Down (Z), Roll, Pitch | Corner-mounted, canted |
+| Surge | T5 (R5), T6 (R4) | Forward/Backward (X) | Side-mounted, forward-facing |
+| Sway | T7 (R6), T8 (R7) | Left/Right (Y) | Starboard-mounted, lateral-facing |
+| Heave/Attitude | T1 (R0), T2 (R1), T3 (R2), T4 (R3) | Up/Down (Z), Roll, Pitch | Corner-mounted, 60 deg canted |
 
-### Moment Arm Summary (Body Frame, mm)
+### Position Summary (PX4 FRD Body Frame, meters)
 
-| Thruster | Lxn (mm) | Lyn (mm) | Lzn (mm) | Function |
-|----------|----------|----------|----------|----------|
-| T1 | -458.55 | -131.24 | -96.58 | Heave/Attitude (Front-Port) |
-| T2 | -458.55 | 136.71 | -96.58 | Heave/Attitude (Front-Starboard) |
-| T3 | 427.45 | 136.71 | -96.58 | Heave/Attitude (Aft-Starboard) |
-| T4 | 427.45 | -131.24 | -96.58 | Heave/Attitude (Aft-Port) |
-| T5 | -203.50 | -136.73 | 118.94 | Surge (Port) |
-| T6 | -203.50 | 141.27 | 118.64 | Surge (Starboard) |
-| T7 | 272.56 | 90.76 | 179.89 | Sway (Aft) |
-| T8 | -304.50 | 90.76 | 179.89 | Sway (Forward) |
+| Rotor | Thruster | PX | PY | PZ | Thrust Axis | Role |
+|-------|----------|------|--------|--------|-------------|------|
+| R0 | T1 | +0.4430 | +0.1339 | -0.1027 | (0, -0.500, +0.866) | Bow starboard canted |
+| R1 | T2 | +0.4430 | -0.1341 | -0.1030 | (0, +0.500, +0.866) | Bow port canted |
+| R2 | T3 | -0.4430 | +0.1337 | -0.1030 | (0, -0.499, +0.867) | Stern starboard canted |
+| R3 | T4 | -0.4430 | -0.1341 | -0.1027 | (0, +0.499, +0.867) | Stern port canted |
+| R4 | T6 | +0.0884 | +0.1385 | +0.1128 | (1, 0, 0) | Mid starboard surge |
+| R5 | T5 | +0.0882 | -0.1395 | +0.1129 | (1, 0, 0) | Mid port surge |
+| R6 | T7 | +0.2886 | +0.0880 | +0.1733 | (0, +1, 0) | Forward starboard lateral |
+| R7 | T8 | -0.2884 | +0.0880 | +0.1735 | (0, -1, 0) | Aft starboard lateral |
 
-### Coordinate System (NED Body Frame)
+### Coordinate System (PX4 FRD Body Frame)
 - **X**: Positive forward (surge)
 - **Y**: Positive starboard (sway)
 - **Z**: Positive down (heave)
+
+All thrusters are bidirectional (`CA_R_REV 255`). All torque coefficients are zero (`KM 0`).
 
 ---
 
 ## 2. Thruster Group Analysis
 
-### 2.1 Surge Thrusters (T5, T6)
+### 2.1 Surge Thrusters (T5/R5, T6/R4)
 
 **Configuration:**
 - Side-mounted on port and starboard, facing forward
-- Both at X = -203.50mm (forward of geometric center)
-- T5 at Y = -136.73mm (port), T6 at Y = +141.27mm (starboard)
-- Z heights: T5 at 118.94mm, T6 at 118.64mm
+- R4 at X = +0.0884m, R5 at X = +0.0882m (88mm forward of CG)
+- R4 at Y = +0.1385m (starboard), R5 at Y = -0.1395m (port)
+- Z heights: R4 at +0.1128m, R5 at +0.1129m (113mm below CG)
 
 **Strengths:**
-- Symmetric Y-placement about centerline allows clean surge without yaw coupling
-- Both at same X position eliminates differential thrust requirements for pure surge
-- Matched Z-height prevents roll coupling during surge
+- Nearly symmetric Y-placement (0.5mm midpoint offset) — minimal yaw coupling during surge
+- Nearly same X position (0.2mm difference) — clean surge without differential requirements
+- Matched Z-height (0.1mm difference) — no roll coupling during surge
 
-**Concerns:**
-- **Forward offset**: Both thrusters are 203.50mm forward of center
-  - Surge thrust creates a pitch-down moment about the center of mass
-  - Requires T1-T4 compensation to maintain level attitude during acceleration
-  - Question: Is this offset intentional to counter a nose-heavy CG?
+**Remaining Concerns:**
+- **Below-CG mounting (113mm):** Forward thrust produces a nose-down pitch moment.
+  M_pitch = 2 x 0.113 = 0.226 N-m per unit surge force. The allocator compensates using
+  the canted thrusters, consuming some pitch authority during forward flight.
 
-- **Minor Y-asymmetry**: Port at -136.73mm, starboard at +141.27mm (4.54mm difference)
-  - Will create small yaw coupling during surge
-  - Likely within acceptable tolerance
+- **Forward-of-CG mounting (88mm):** Minor effect. The forward offset means surge thrust
+  application point is ahead of CG, but since thrust is purely axial this only matters
+  if there is any vertical misalignment.
 
-**Control Implication:** Pure surge commands will require small pitch compensation from T1-T4.
+**Control Implication:** Pure surge commands require small pitch compensation from T1-T4.
 
 ---
 
-### 2.2 Sway Thrusters (T7, T8)
+### 2.2 Sway Thrusters (T7/R6, T8/R7)
 
 **Configuration:**
-- Top-mounted, facing laterally (Y-direction thrust)
-- T7 at X = +272.56mm (aft of center)
-- T8 at X = -304.50mm (forward of center)
-- **Both at Y = +90.76mm (starboard of centerline)**
-- Both at Z = 179.89mm
+- Starboard-mounted, facing laterally (Y-direction thrust)
+- R6 at X = +0.2886m (forward of CG), thrust axis AY = +1 (starboard)
+- R7 at X = -0.2884m (aft of CG), thrust axis AY = -1 (port)
+- **Both at Y = +0.0880m (starboard of centerline)**
+- R6 at Z = +0.1733m, R7 at Z = +0.1735m (173mm below CG)
 
-**CRITICAL CONCERN — Both Thrusters on Same Side of Y-Axis:**
+**Major Improvement — Sway-Yaw Decoupling:**
 
-The most significant design issue is that both sway thrusters are positioned at Y = +90.76mm, meaning both are starboard of the vehicle centerline. This is highly unusual for sway thrusters.
+The X-arms are now nearly symmetric (0.2886m vs 0.2884m, only 0.2mm difference). This
+means pure sway commands produce essentially zero yaw coupling:
 
-**Implications:**
+- Pure sway net yaw = (0.2886 - 0.2884) x F = 0.0002 x F — negligible
+- Pure yaw lever = (0.2886 + 0.2884) x F = 0.5770 x F — full authority
 
-1. **Yaw coupling during sway commands:**
-   - When both T7 and T8 thrust in the same Y-direction for sway:
-   - T7 creates yaw moment: M_yaw = F × (+272.56mm)
-   - T8 creates yaw moment: M_yaw = F × (-304.50mm)
-   - Net yaw moment = F × (272.56 - 304.50) = F × (-31.94mm)
-   - Result: Pure sway commands induce yaw (nose turns toward direction of sway)
+Previously the 28.4mm arm difference caused significant heading drift during lateral
+movement. This is now eliminated.
 
-2. **Roll coupling:**
-   - Both thrusters at Y = +90.76mm and Z = 179.89mm
-   - Lateral thrust creates roll moment about X-axis
-   - Sway right (thrust +Y) → roll to port
-   - This must be compensated by T1-T4 differential
+**Remaining Concern — Both Thrusters on Starboard Side:**
 
-3. **Reduced yaw authority:**
-   - With both sway thrusters on the same side, they cannot efficiently create pure yaw moments
-   - Yaw control relies entirely on T1-T4 differential thrust (assuming they are canted)
+Both sway thrusters are at Y = +0.0880m. This creates roll coupling during sway:
 
-**Questions:**
-- Is this placement driven by mechanical constraints (payload bay, sensors, cables)?
-- Was symmetric placement (one port, one starboard) evaluated?
-- What is the expected sway performance requirement?
+1. **Roll coupling during sway commands:**
+   - Both thrusters at PZ ≈ +0.173m (below CG)
+   - Lateral thrust creates roll moment: M_roll = 2 x 0.173 x F per unit sway
+   - Sway right → roll to port; sway left → roll to starboard
+   - The canted thrusters must compensate, consuming attitude authority
+
+2. **Reduced efficiency:**
+   - Some canted thruster capacity is used for roll compensation during sway
+   - Combined sway + heave maneuvers see earlier saturation
+
+3. **No lateral redundancy:**
+   - Single lateral thruster failure eliminates clean sway/yaw control
+   - Vehicle falls back to canted thrusters for sway (~0.5 per thruster, 4 thrusters)
 
 ---
 
-### 2.3 Heave/Attitude Thrusters (T1, T2, T3, T4)
+### 2.3 Heave/Attitude Thrusters (T1-T4 / R0-R3)
 
 **Configuration:**
-- Four thrusters at vehicle corners
-- Front pair (T1, T2) at X = -458.55mm
-- Rear pair (T3, T4) at X = +427.45mm
-- Port (T1, T4) at Y = -131.24mm
-- Starboard (T2, T3) at Y = +136.71mm
-- All at Z = -96.58mm (below center)
-- **Observation from drawings: These appear to be CANTED (angled), not purely vertical**
-
-**Canted (Vectored) Configuration — Confirmed 45° Cant Angles:**
-
-T1-T4 are mounted at 45° angles, providing thrust in multiple axes. This is common in ROV designs for increased maneuverability.
-
-With 45° cant angles, T1-T4 contribute to:
-- **Heave**: All four thrusting up/down together
-- **Roll**: Port vs starboard differential (T1/T4 vs T2/T3)
-- **Pitch**: Front vs rear differential (T1/T2 vs T3/T4)
-- **Yaw**: Diagonal pairs differential (T1/T3 vs T2/T4)
-- **Surge**: Additional surge authority (all four, horizontal component)
-- **Sway**: Additional sway authority (all four, horizontal component)
-
-**Cant angles confirmed at 45°.**
+- Four thrusters at vehicle corners, canted at 60 degrees from horizontal
+- Bow pair (R0, R1) at X = +0.4430m
+- Stern pair (R2, R3) at X = -0.4430m
+- Starboard (R0, R2) at Y ≈ +0.1338m
+- Port (R1, R3) at Y ≈ -0.1341m
+- All at Z ≈ -0.103m (103mm above CG)
+- **All four thrust downward at positive throttle (AZ positive)**
 
 **Strengths:**
-- Large baseline: ~886mm longitudinal, ~268mm lateral
-- Strong moment arms for attitude control
-- Redundancy: Loss of one thruster still allows attitude control
+- **Symmetric fore/aft lever arms** (443mm both sides) — no pitch coupling from heave
+- **Symmetric port/starboard** (sub-0.5mm offsets) — no yaw coupling from heave
+- **Same vertical thrust direction** — full heave authority in both directions, no
+  reverse-thrust penalty, symmetric pitch authority
+- Large baseline: 886mm longitudinal, ~268mm lateral — strong moment arms
+- Redundancy: Loss of one thruster still allows degraded attitude control
 
-**Concerns:**
-- **X-asymmetry**: Front at -458.55mm, rear at +427.45mm (31.1mm offset)
-  - Geometric center is not at X=0
-  - Pure heave will create small pitch moment
+**Cant Angle (60 degrees):**
 
-- **Y-asymmetry**: Port at -131.24mm, starboard at +136.71mm (5.47mm offset)
-  - Pure heave will create small roll moment
+Each canted thruster produces:
+- Heave component: sin(60) = 0.866 per unit thrust
+- Sway component: cos(60) = 0.500 per unit thrust
+- Heave-to-sway ratio: 1.73:1
+
+The lateral components within each pair (bow or stern) oppose each other, canceling
+during heave and providing sway when differentially commanded.
 
 ---
 
@@ -150,430 +143,217 @@ With 45° cant angles, T1-T4 contribute to:
 
 | DOF | Primary Actuators | Secondary/Compensation | Notes |
 |-----|-------------------|----------------------|-------|
-| Surge | T5, T6 | T1-T4 (if canted) | Pitch compensation needed |
-| Sway | T7, T8 | T1-T4 (if canted) | Yaw + Roll compensation needed |
-| Heave | T1, T2, T3, T4 | — | Minor pitch/roll coupling |
+| Surge | T5, T6 | T1-T4 (horizontal component) | Pitch compensation needed |
+| Sway | T7, T8 | T1-T4 (lateral component) | Roll compensation needed |
+| Heave | T1, T2, T3, T4 | — | Clean, symmetric |
 | Roll | T1/T4 vs T2/T3 | — | Good authority |
-| Pitch | T1/T2 vs T3/T4 | — | Good authority |
-| Yaw | T1/T3 vs T2/T4 (if canted) | — | Reduced authority if T1-T4 not canted |
+| Pitch | T1/T2 vs T3/T4 | — | Good authority, symmetric |
+| Yaw | T7/T8 differential, T1-T4 diagonal | — | Good authority |
 
 ### 3.2 Expected Control Coupling
 
 | Command | Primary Motion | Induced Coupling | Severity |
 |---------|---------------|------------------|----------|
 | Pure Surge | Forward/Back | Pitch-down moment | Medium |
-| Pure Sway | Left/Right | Yaw + Roll | **High** |
-| Pure Heave | Up/Down | Minor pitch + roll | Low |
+| Pure Sway | Left/Right | Roll (from off-center laterals) | Medium |
+| Pure Heave | Up/Down | Negligible | **Low** |
 | Pure Roll | Bank | Minimal | Low |
 | Pure Pitch | Nose up/down | Minimal | Low |
-| Pure Yaw | Heading change | Depends on T1-T4 config | Unknown |
+| Pure Yaw | Heading change | Negligible sway residual | **Low** |
 
-### 3.3 Mixer Design Requirements
+### 3.3 Mixer Design
 
-The control allocator must:
+The PX4 pseudo-inverse control allocator handles the fully-coupled 8-thruster geometry.
+Key considerations:
 
-1. **Decouple sway from yaw/roll**: T7/T8 placement requires significant compensation
-2. **Compensate surge pitch moment**: T5/T6 forward offset needs pitch correction
-3. **Handle cant angles**: If T1-T4 are vectored, full 6-DOF contribution matrix needed
-4. **Manage saturation**: Compensation uses motor headroom, reducing max authority
+1. **Sway-roll decoupling** is the primary compensation task (lateral thrusters off-center)
+2. **Surge-pitch compensation** is secondary (surge thrusters below CG)
+3. **Heave and yaw are clean** — minimal coupling to compensate
+4. **Saturation management** — combined sway + heave may saturate canted thrusters
 
-**Mixer Complexity: HIGH**
+**Mixer Complexity: MODERATE** (improved from HIGH in previous configuration)
 
-Unlike symmetric configurations where DOFs are naturally decoupled, this design requires a fully-coupled mixer with accurate moment arm and thrust vector data.
-
----
-
-## 4. Potential Drawbacks
-
-### 4.1 Sway Performance (High Impact)
-
-| Issue | Impact |
-|-------|--------|
-| Both T7/T8 on starboard side | Every sway command induces yaw |
-| Yaw coupling | Heading drift during lateral movement |
-| Roll coupling | Attitude disturbance during sway |
-| Compensation overhead | Reduced effective sway force |
-
-**Operational Impact:**
-- Station-keeping with cross-currents will be challenging
-- Lateral inspection passes will require constant heading correction
-- Autonomous waypoint following may show oscillation in heading
-
-### 4.2 Surge Performance (Medium Impact)
-
-| Issue | Impact |
-|-------|--------|
-| T5/T6 forward of center | Pitch-down during acceleration |
-| Pitch coupling | Depth excursions during speed changes |
-
-**Operational Impact:**
-- Transit may require active pitch compensation
-- Depth-holding accuracy degrades during acceleration/deceleration
-
-### 4.3 System-Level Concerns
-
-| Category | Issue | Severity |
-|----------|-------|----------|
-| Efficiency | Motor effort spent on compensation | Medium |
-| Wear | Uneven thruster usage | Medium |
-| Tuning | Complex gain interactions | High |
-| Fault Tolerance | T7 or T8 loss cripples sway | High |
-| Simulation | Must match exact geometry | High |
+The symmetric lever arms and same-direction canted thrusters significantly reduce the
+coupling compensation burden compared to the previous asymmetric configuration.
 
 ---
 
-## 5. Operational Scenarios — How These Issues Manifest
-
-This section provides concrete examples of how the thruster placement affects real-world operations.
+## 4. Operational Scenarios
 
 ### Scenario 1: Lateral Pipeline Inspection
 
-**Task:** Move 2 meters laterally while keeping the camera pointed at a pipeline.
+**Task:** Move laterally while keeping camera pointed at a pipeline.
 
-**Expected behavior:** Vehicle translates sideways, heading remains constant.
+**Previous behavior:** Significant heading drift (estimated 7 deg over 2 seconds at 50N
+per thruster) due to 28.4mm lateral thruster arm asymmetry.
 
-**What actually happens:**
+**Current behavior:** Heading drift effectively eliminated (0.2mm arm difference produces
+negligible yaw). The vehicle translates cleanly sideways. **Minor roll disturbance** occurs
+from off-center lateral thrusters, easily compensated by the canted thrusters.
 
-```
-INITIAL STATE                        AFTER SWAY COMMAND
-
-    Pipeline                             Pipeline
-════════════════════                 ════════════════════
-        ↑                                    ↑
-   [ Vehicle ]  →  Sway right           [ Vehicle ]
-    Heading: 0°                          ╱
-    Camera: On target                   ╱  Heading: -7°
-                                       ╱   Camera: Off target
-                                      ↙
-```
-
-**Why this happens:**
-- T7 at X = +272.6mm creates yaw moment = F × 272.6mm (nose right)
-- T8 at X = -304.5mm creates yaw moment = F × -304.5mm (nose left)
-- Net yaw moment = F × -31.9mm → nose turns left during rightward sway
-
-**Quantified impact (assuming 50N per thruster):**
-
-| Parameter | Value |
-|-----------|-------|
-| Net lateral force | 100N |
-| Induced yaw moment | 3.19 Nm |
-| Heading drift (2 sec) | ~7° |
-| Camera offset at 2m range | ~24 cm off target |
-
-**Operational consequence:** Operator must constantly correct heading during lateral tracking, increasing workload and reducing inspection quality.
+**Status: Greatly improved.**
 
 ---
 
 ### Scenario 2: Station Keeping in Cross-Current
 
-**Task:** Hold position with a 0.5 m/s cross-current from port side.
+**Task:** Hold position with a 0.5 m/s cross-current.
 
-**Expected behavior:** Vehicle maintains position and heading.
+**Previous behavior:** Sway correction induced yaw oscillation, causing heading hunting
+and position drift.
 
-**What actually happens:**
+**Current behavior:** Sway corrections produce clean lateral force without yaw coupling.
+Roll coupling from off-center lateral thrusters is compensated by the canted thrusters.
+Station-keeping performance is significantly improved, with stable heading during lateral
+corrections.
 
-```
-             Current → → →
-
-TIME 0:          TIME 5s:         TIME 10s:
-
-[ Vehicle ]      [ Vehicle ]       [ Vehicle ]
-Heading: 0°        ↗               ↗  ↖  ↗
-                 Heading: -3°     Oscillating ±5°
-                 Drifting         Hunting for position
-```
-
-**Why this happens:**
-1. Current pushes vehicle starboard
-2. Controller commands sway to port (T7/T8 thrust -Y)
-3. Sway command induces yaw moment (nose turns right this time)
-4. Heading controller corrects yaw using T1-T4
-5. T1-T4 yaw correction reduces heave/attitude authority
-6. Vehicle oscillates as sway and yaw controllers fight
-
-**Operational consequence:** Position hold in currents shows heading oscillation. DVL-based navigation accuracy degrades. Power consumption increases due to constant corrections.
+**Status: Greatly improved.**
 
 ---
 
 ### Scenario 3: Docking Approach
 
-**Task:** Approach a docking station with 5cm lateral precision.
+**Task:** Approach docking station with 5cm lateral precision.
 
-**Expected behavior:** Smooth lateral alignment to docking port.
+**Previous behavior:** Each lateral adjustment disturbed heading and induced roll,
+requiring iterative corrections across three DOFs.
 
-**What actually happens:**
+**Current behavior:** Lateral adjustments produce clean sway with only roll coupling
+(single axis compensation needed). Heading remains stable. Docking approach is smoother
+with fewer correction cycles.
 
-```
-APPROACH SEQUENCE:
-
-     Dock                           Dock
-      ║                              ║
-      ║    [ Vehicle ]               ║   [ Vehicle ]
-      ║         ↓                    ║      ╲
-      ║    Sway left                 ║       ╲ Yaw + Roll
-      ║                              ║        ╲
-      ╠════                          ╠════
-      Docking port                   Docking port
-
-      Expected                       Actual
-```
-
-**Why this happens:**
-- Fine lateral adjustments require small sway commands
-- Each sway command induces yaw AND roll
-- Roll causes depth change (buoyancy shift)
-- Three DOFs disturbed when only one was commanded
-
-**Quantified impact:**
-
-| Sway Command | Induced Yaw | Induced Roll | Depth Change |
-|--------------|-------------|--------------|--------------|
-| 10N lateral | 0.32 Nm yaw | ~0.5° roll | ~2 cm |
-| 25N lateral | 0.80 Nm yaw | ~1.2° roll | ~5 cm |
-| 50N lateral | 1.60 Nm yaw | ~2.5° roll | ~10 cm |
-
-**Operational consequence:** Precision docking requires multiple correction cycles. What should be a single smooth approach becomes an iterative process.
+**Status: Improved.** Roll coupling during fine adjustments is the remaining concern.
 
 ---
 
 ### Scenario 4: Transit with Speed Changes
 
-**Task:** Transit 100m, accelerating to cruise speed then decelerating to stop.
+**Task:** Transit 100m, accelerating to cruise then decelerating.
 
-**Expected behavior:** Vehicle maintains depth and pitch throughout.
+**Behavior (unchanged):** Surge thrusters at 113mm below CG produce pitch-down moment
+during acceleration and pitch-up during deceleration. Depth excursions of approximately
+0.3-0.5m during speed transitions.
 
-**What actually happens:**
-
-```
-DEPTH PROFILE DURING TRANSIT:
-
-Depth
-  ↑
-  │         Acceleration      Cruise        Deceleration
-  │              ↓              ↓                ↓
-  │            ╱‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾╲
-  │           ╱                              ╲
-  │──────────╱                                ╲──────────  Target
-  │        ↙                                    ↘
-  │      Pitch down                          Pitch up
-  │      = Dive                              = Rise
-  └─────────────────────────────────────────────────────→ Distance
-```
-
-**Why this happens:**
-- T5/T6 are at X = -203.5mm (forward of center)
-- Surge thrust creates pitch-down moment
-- Acceleration → nose dives → depth increases
-- Deceleration → nose rises → depth decreases
-
-**Quantified impact (assuming 80N surge thrust):**
-
-| Phase | Pitch Moment | Pitch Change | Depth Excursion |
-|-------|--------------|--------------|-----------------|
-| Acceleration | -16.3 Nm | -3° to -5° | +0.5m dive |
-| Cruise | 0 | 0° | Stable |
-| Deceleration | +16.3 Nm | +3° to +5° | -0.5m rise |
-
-**Operational consequence:** Depth-sensitive missions (mine countermeasures, pipeline following) see depth errors during speed changes. Altitude hold modes work harder during transit.
+**Status: Minor improvement** (113mm vs previous 118mm below CG — marginal).
 
 ---
 
-### Scenario 5: Thruster Failure (T7 or T8)
-
-**Task:** Continue operations after single thruster failure.
+### Scenario 5: Thruster Failure
 
 **Impact comparison:**
 
 | Failed Thruster | Sway Authority | Yaw Impact | Severity |
 |-----------------|----------------|------------|----------|
-| T1, T2, T3, or T4 | 100% | Minor (3 remaining for yaw) | **Low** |
-| T5 or T6 | 100% (sway unaffected) | None | **Low** |
-| **T7** | **50%** | Severe yaw coupling | **High** |
-| **T8** | **50%** | Severe yaw coupling | **High** |
+| T1, T2, T3, or T4 | 100% | Minor | **Low** |
+| T5 or T6 | 100% | None | **Low** |
+| **T7** | **50%** | Moderate | **High** |
+| **T8** | **50%** | Moderate | **High** |
 
-**Why T7/T8 failure is worse:**
-
-With only T7 operational (T8 failed):
-- Single thruster at X = +272.6mm
-- Every sway command creates large yaw moment
-- No way to balance — must use T1-T4 for all yaw compensation
-
-```
-T8 FAILED - SWAY RIGHT COMMAND:
-
-         T7 (only sway thruster)
-              ↓ Force
-              ○─────────────────────×  T8 (failed)
-                    Vehicle
-                       ↺ Strong yaw moment
-
-Result: Vehicle spins more than it translates
-```
-
-**Operational consequence:** T7 or T8 failure effectively eliminates clean sway capability. Mission abort may be required for tasks requiring lateral movement.
+T7/T8 failure impact is reduced compared to previous configuration because the remaining
+single lateral thruster now has a clean moment arm (no asymmetric yaw from single-thruster
+sway), but roll coupling remains.
 
 ---
 
-### Scenario 6: Combined Maneuver — Heave While Maintaining Heading
+### Scenario 6: Combined Heave + Sway Maneuver
 
-**Task:** Ascend 5m while holding position and heading in current.
+**Task:** Ascend while holding position in a cross-current.
 
-**What actually happens:**
+**Thruster budget:**
 
 ```
-THRUSTER BUDGET DURING MANEUVER:
-
 T1-T4 must simultaneously:
-├── Provide heave force (primary task)     → 40% capacity
-├── Counter pitch from T1-T4 asymmetry     → 10% capacity
-├── Counter sway-induced yaw               → 25% capacity
-├── Counter sway-induced roll              → 15% capacity
-└── Reserve for disturbance rejection      → 10% capacity
-                                             ─────────────
-                                             100% — SATURATED
++-- Provide heave force (primary task)        -> 40% capacity
++-- Counter sway-induced roll                 -> 15% capacity
++-- Maintain pitch/roll attitude              -> 10% capacity
++-- Reserve for disturbance rejection         -> 10% capacity
+                                                 ============
+                                                 75% -- headroom available
 ```
 
-**Why this is a problem:**
-
-The 45° canted T1-T4 thrusters provide heave AND attitude control. When the mixer must use them for multiple simultaneous tasks:
-
-1. Heave authority is reduced (can't use full vertical component)
-2. Attitude response is slower (authority split across tasks)
-3. Disturbance rejection suffers (no reserve capacity)
-4. Risk of actuator saturation increases
-
-**Operational consequence:** Complex maneuvers in currents may see degraded performance. Vehicle may not achieve commanded ascent rate while maintaining position.
+**Improvement:** Compared to previous configuration, the removal of heave-pitch transient
+coupling and elimination of parasitic yaw compensation frees approximately 25% more canted
+thruster headroom for combined maneuvers.
 
 ---
 
 ### Summary: Scenarios by Severity
 
-| Scenario | Primary Issue | Severity | Workaround |
-|----------|---------------|----------|------------|
-| Pipeline inspection | Sway→Yaw coupling | High | Reduce lateral speed, accept heading drift |
-| Station keeping | Sway→Yaw oscillation | High | Detune sway response, accept position error |
-| Docking | Multi-DOF coupling | High | Iterative approach, slower operations |
-| Transit | Surge→Pitch coupling | Medium | Active pitch compensation, accept depth variance |
-| Thruster failure | Asymmetric redundancy | High | Mission abort for sway-critical tasks |
-| Combined maneuvers | Actuator saturation | Medium | Limit simultaneous commands, sequence operations |
+| Scenario | Primary Issue | Severity | Change from Previous |
+|----------|---------------|----------|---------------------|
+| Pipeline inspection | Sway-roll coupling | Medium | Greatly improved (yaw eliminated) |
+| Station keeping | Sway-roll coupling | Medium | Greatly improved (yaw eliminated) |
+| Docking | Roll during fine adjustments | Medium | Improved (single-axis coupling) |
+| Transit | Surge-pitch coupling | Medium | Minor improvement |
+| Thruster failure | Asymmetric redundancy | High | Unchanged |
+| Combined maneuvers | Actuator saturation | Low-Medium | Improved (more headroom) |
 
 ---
 
-## 6. Questions for the Team
+## 5. Improvements Over Previous Configuration
 
-### Configuration Verification
-
-1. **T7/T8 Y-positions**: Both show Y = +90.76mm. Is this correct, or should one be at -90.76mm (port)?
-2. **Thruster directions**: Which way does positive PWM command thrust for each motor?
-3. **Center of mass location**: Where is the actual CG relative to body frame origin?
-
-### Design Intent
-
-4. **Why are T7/T8 both on starboard?** What constraint drove this decision?
-5. **T5/T6 forward offset**: Intentional CG compensation or geometric constraint?
-6. **Were alternative configurations evaluated?** (e.g., BlueROV2-style vectored)
-
-### Operational Requirements
-
-7. **Sway performance spec**: What lateral speed/acceleration is required?
-8. **Station-keeping accuracy**: What position hold tolerance is needed?
-9. **Expected current conditions**: What cross-currents must the vehicle handle?
-
-### Control Architecture
-
-10. **Is model-based control an option?** MPC could handle coupling better.
-11. **What's the control loop rate?** Faster loops can better reject coupling disturbances.
+| Issue | Previous | Current | Status |
+|-------|----------|---------|--------|
+| Canted thruster directions | Opposing (bow down, stern up) | All same direction | **Fixed** |
+| Heave authority | Reduced by reverse-thrust penalty | Full symmetric | **Fixed** |
+| Pitch authority | Asymmetric nose-up vs nose-down | Symmetric | **Fixed** |
+| Fore/aft symmetry | 27.4mm canted, 28.4mm lateral | 0.0mm canted, 0.2mm lateral | **Fixed** |
+| Sway-yaw coupling | Significant (heading drift) | Negligible | **Fixed** |
+| Port/starboard symmetry | Up to 8mm offsets | Sub-1mm offsets | **Greatly improved** |
+| Lateral thruster side | Both on port (94.5mm) | Both on starboard (88mm) | Slightly improved |
+| Sway-roll coupling | 179mm below CG | 173mm below CG | Marginal |
+| Surge pitch coupling | 118mm below CG | 113mm below CG | Marginal |
 
 ---
 
-## 7. Recommendations
-
-### Immediate Actions (Before Proceeding)
-
-1. **VERIFY T7/T8 POSITIONS**
-   - Confirm Y = +90.76mm for both is correct
-   - If one should be at Y = -90.76mm, correct the data
-   - This single change would resolve most sway coupling issues
-
-2. **DOCUMENT T1-T4 CANT ANGLES**
-   - Measure or extract from CAD the exact thrust vector angles
-   - Without this, we cannot build an accurate mixer
-
-3. **MEASURE CENTER OF MASS**
-   - Physical measurement or CAD calculation
-   - Critical for understanding coupling behavior
-
-### If T7/T8 Positions Are Correct (Cannot Change)
-
-1. **Design fully-coupled mixer**
-   - Use pseudoinverse control allocation
-   - Weight sway commands lower to prevent saturation
-   - Accept reduced sway performance
-
-2. **Implement feedforward compensation**
-   - Pre-compute expected yaw/roll disturbance from sway commands
-   - Inject counter-moments proactively
-
-3. **Consider control mode limitations**
-   - Document that certain combined maneuvers may perform poorly
-   - Define operational envelope limits
-
-4. **Extensive simulation before water testing**
-   - Validate coupling compensation
-   - Test failure modes
+## 6. Remaining Recommendations
 
 ### If Hardware Can Be Modified
 
-**Option A — Relocate T8 to Port Side:**
-- Move T8 to Y = -90.76mm (mirror of T7)
-- Maintains X positions, fixes Y symmetry
-- Eliminates primary sway coupling issue
+**Option A — Split Lateral Thrusters Across Centerline:**
+- Place one lateral thruster at Y = +88mm (starboard), one at Y = -88mm (port)
+- Eliminates roll coupling during sway entirely
+- Provides lateral redundancy (one per side)
+- **Highest-impact single change remaining**
 
-**Option B — Symmetric Sway Thruster Redesign:**
-- Place T7/T8 on vehicle centerline (Y = 0)
-- Symmetric X positions (e.g., both at ±275mm)
-- Cleanest solution for sway control
+**Option B — Move Lateral Thrusters to Centerline:**
+- Place both T7/T8 at Y = 0mm
+- Eliminates roll coupling
+- Maintains current X-arm symmetry
 
-**Option C — Increase T1-T4 Cant Angles:**
-- If T1-T4 have minimal cant, increase angles
-- Provides sway authority from corner thrusters
-- Reduces dependence on T7/T8
+**Option C — Reduce Cant Angle to 45 degrees:**
+- Increases sway authority from canted thrusters (0.707 vs 0.500 per thruster)
+- Reduces heave authority (0.707 vs 0.866)
+- Better suited for missions requiring significant lateral movement
+- Trade-off: less heave margin
 
----
+### If Hardware Cannot Be Modified
 
-## 8. Summary of Key Issues
-
-| Priority | Issue | Affected DOF | Recommendation |
-|----------|-------|--------------|----------------|
-| **Critical** | T7/T8 both at Y=+90.76mm | Sway, Yaw | Verify data; relocate if possible |
-| **High** | T1-T4 cant angles unknown | All | Measure and document |
-| **Medium** | T5/T6 forward offset | Surge, Pitch | Verify against CG location |
-| **Low** | Minor Y-asymmetries | Various | Accept; compensate in mixer |
-
----
-
-## 9. Conclusion
-
-The ReconBot thruster configuration presents a workable but challenging control problem. The vehicle is fully controllable in 6 DOF, but the T7/T8 sway thruster placement creates significant coupling that will:
-
-- Reduce sway efficiency
-- Complicate control tuning
-- Require careful mixer design
-- Limit operational performance in cross-currents
-
-**The single most impactful improvement would be verifying (and potentially correcting) the T7/T8 Y-positions.** If both are truly at Y = +90.76mm, the team should understand why this constraint exists and whether it can be addressed.
-
-Before water testing, we need:
-1. Confirmed thruster positions
-2. T1-T4 cant angles
-3. Center of mass location
-4. Validated simulation with accurate geometry
-
-The control system can compensate for the current design, but hardware symmetry would substantially reduce risk and improve performance.
+1. **Design roll feedforward compensation** — pre-compute expected roll disturbance from
+   sway commands and inject counter-moments proactively
+2. **Weight sway commands appropriately** — the allocator can prioritize heave over sway
+   to prevent saturation during combined maneuvers
+3. **Validate in simulation** with accurate 8-thruster geometry before water testing
 
 ---
 
-*Document prepared for ReconBot development team review*
-*Revised analysis based on corrected thruster function assignments*
-*Analysis based on moment arm data provided 2025-12-27*
+## 7. Conclusion
+
+The current ReconBot thruster configuration is a well-balanced 8-thruster design with
+strong improvements over the previous iteration. The key achievements are:
+
+- **Symmetric heave** with no reverse-thrust penalty or pitch transients
+- **Symmetric pitch** authority in both directions
+- **Negligible sway-yaw coupling** from nearly-equal lateral thruster arms
+- **Sub-mm port/starboard symmetry** across all thruster pairs
+- **Full 6-DOF controllability** with 8 bidirectional thrusters
+
+The single remaining significant geometric issue is the **lateral thrusters on the same
+side of the vehicle**, which produces roll coupling during sway. If this cannot be changed
+due to mechanical constraints, the control allocator can compensate at the cost of some
+canted thruster headroom during combined maneuvers.
+
+---
+
+*Document updated 2026-02-15 with revised thruster positions and corrected thrust directions*
+*Analysis based on airframe file 60003_uuv_reconbot (fix/thruster-allocation branch)*
