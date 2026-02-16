@@ -65,7 +65,10 @@ param set-default UUV_GAIN_Y_D 0.3
 param set-default UUV_GAIN_Z_P 2.0
 param set-default UUV_GAIN_Z_D 0.2
 
-# --- Depth hold integrator ---
+# --- Position hold integrators ---
+param set-default POSE_XY_I_EN 1
+param set-default POSE_KI_XY 0.3
+param set-default POSE_I_MAX_XY 0.2
 param set-default POSE_Z_I_ENABLE 1
 param set-default POSE_KI_Z 0.3
 param set-default POSE_I_MAX_Z 0.2

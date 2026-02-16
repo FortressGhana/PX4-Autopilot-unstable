@@ -130,10 +130,23 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 
 	Vector3f vel_err = vel_des_world - vel_world;
 
-	// Reset integrator if Z error is too large (prevents windup from setpoint jumps)
-	const float max_z_error = 5.0f;  // meters
-	if (fabsf(pos_err(2)) > max_z_error) {
-		_pos_i_z = 0.0f;
+	// Reset integrators if error is too large (prevents windup from setpoint jumps)
+	const float max_pos_error = 5.0f;  // meters
+	if (fabsf(pos_err(0)) > max_pos_error) { _pos_i_x = 0.0f; }
+	if (fabsf(pos_err(1)) > max_pos_error) { _pos_i_y = 0.0f; }
+	if (fabsf(pos_err(2)) > max_pos_error) { _pos_i_z = 0.0f; }
+
+	// --- XY integrator (enabled by param)
+	if (_param_pose_xy_i_enable.get() && dt > 0.0f) {
+		if (PX4_ISFINITE(pos_err(0))) {
+			_pos_i_x += pos_err(0) * dt * _param_pose_ki_xy.get();
+			_pos_i_x = math::constrain(_pos_i_x, -_param_pose_i_max_xy.get(), _param_pose_i_max_xy.get());
+		}
+
+		if (PX4_ISFINITE(pos_err(1))) {
+			_pos_i_y += pos_err(1) * dt * _param_pose_ki_xy.get();
+			_pos_i_y = math::constrain(_pos_i_y, -_param_pose_i_max_xy.get(), _param_pose_i_max_xy.get());
+		}
 	}
 
 	// --- Z integrator (enabled by param)
@@ -152,13 +165,14 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 		);
 
 	}else{
-		// POSITION HOLD MODE: PD control on position + feedforward from vel_des
+		// POSITION HOLD MODE: PID control on position + feedforward from vel_des
 
 		// P term: position error
+		// I term: accumulated position error (XY and Z)
 		// D term: velocity error (acts as damping + feedforward)
 		p_control_output = Vector3f(
-		_param_pose_gain_x.get() * pos_err(0) - _param_pose_gain_d_x.get() * vel_err(0),
-		_param_pose_gain_y.get() * pos_err(1) - _param_pose_gain_d_y.get() * vel_err(1),
+		_param_pose_gain_x.get() * pos_err(0) - _param_pose_gain_d_x.get() * vel_err(0) + _pos_i_x,
+		_param_pose_gain_y.get() * pos_err(1) - _param_pose_gain_d_y.get() * vel_err(1) + _pos_i_y,
 		_param_pose_gain_z.get() * pos_err(2) - _param_pose_gain_d_z.get() * vel_err(2) + _pos_i_z
 		);
 	}
@@ -347,12 +361,16 @@ void UUVPOSControl::Run()
 					      _vcontrol_mode.flag_control_altitude_enabled);
 
 	if (position_control_active && !_was_position_control_active) {
-		// Entering position/altitude control - reset integrator
+		// Entering position/altitude control - reset integrators
+		_pos_i_x = 0.0f;
+		_pos_i_y = 0.0f;
 		_pos_i_z = 0.0f;
 	}
 
 	if (!position_control_active) {
-		// Not in position control - keep integrator zeroed
+		// Not in position control - keep integrators zeroed
+		_pos_i_x = 0.0f;
+		_pos_i_y = 0.0f;
 		_pos_i_z = 0.0f;
 	}
 
