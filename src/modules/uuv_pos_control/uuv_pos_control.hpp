@@ -117,6 +117,8 @@ private:
 
 	perf_counter_t	_loop_perf;
 	hrt_abstime _last_run{0};
+	float _pos_i_x{0.0f};
+	float _pos_i_y{0.0f};
 	float _pos_i_z{0.0f};
 	bool _was_position_control_active{false};
 
@@ -139,6 +141,9 @@ private:
 		(ParamFloat<px4::params::POSE_KI_Z>) _param_pose_ki_z,
 		(ParamFloat<px4::params::POSE_I_MAX_Z>) _param_pose_i_max_z,
 		(ParamInt<px4::params::POSE_Z_I_ENABLE>) _param_pose_z_i_enable,
+		(ParamInt<px4::params::POSE_XY_I_EN>) _param_pose_xy_i_enable,
+		(ParamFloat<px4::params::POSE_KI_XY>) _param_pose_ki_xy,
+		(ParamFloat<px4::params::POSE_I_MAX_XY>) _param_pose_i_max_xy,
 		(ParamFloat<px4::params::DVL_ALT_MAX_AGE>) _param_dvl_alt_max_age,
 		(ParamFloat<px4::params::UUV_BUOY_COMP>) _param_buoy_comp
 

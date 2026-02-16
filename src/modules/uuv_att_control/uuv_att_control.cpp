@@ -217,6 +217,13 @@ void UUVAttitudeControl::control_attitude_geo(const vehicle_attitude_s &attitude
 			pitch_u -= thrust_x * surge_pff;
 		}
 
+		// Feedforward: compensate yaw coupling from canted thruster reaction torque
+		const float heave_yff = _param_heave_yaw_ff.get();
+
+		if (fabsf(heave_yff) > FLT_EPSILON) {
+			yaw_u -= thrust_z * heave_yff;
+		}
+
 		constrain_actuator_commands(roll_u, pitch_u, yaw_u, thrust_x, thrust_y, thrust_z);
 
 	} else {
@@ -239,6 +246,13 @@ void UUVAttitudeControl::control_attitude_geo(const vehicle_attitude_s &attitude
 
 		if (surge_pff > FLT_EPSILON) {
 			pitch_u -= thrust_x * surge_pff;
+		}
+
+		// Feedforward: compensate yaw coupling from canted thruster reaction torque
+		const float heave_yff = _param_heave_yaw_ff.get();
+
+		if (fabsf(heave_yff) > FLT_EPSILON) {
+			yaw_u -= thrust_z * heave_yff;
 		}
 
 		constrain_actuator_commands(roll_u, pitch_u, yaw_u, thrust_x, thrust_y, thrust_z);

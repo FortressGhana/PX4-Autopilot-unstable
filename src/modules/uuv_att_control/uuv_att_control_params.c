@@ -271,3 +271,18 @@ PARAM_DEFINE_FLOAT(UUV_EXTW_MAX_AGE, 0.02f);
  * @group UUV Attitude Control
  */
 PARAM_DEFINE_FLOAT(UUV_SURGE_PFF, 0.0f);
+
+/**
+ * Heave-yaw feedforward compensation gain
+ *
+ * Feedforward yaw torque proportional to heave thrust to compensate
+ * for yaw coupling from canted thruster reaction torque (unmodeled KM).
+ * Tune empirically: command a heave step and adjust until yaw transient
+ * disappears. Flip sign if yaw worsens. Set to 0 to disable.
+ *
+ * @min -0.5
+ * @max 0.5
+ * @decimal 3
+ * @group UUV Attitude Control
+ */
+PARAM_DEFINE_FLOAT(UUV_HEAVE_YFF, 0.1f);

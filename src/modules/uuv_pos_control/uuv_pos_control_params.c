@@ -141,6 +141,37 @@ PARAM_DEFINE_INT32(POSE_Z_I_ENABLE, 0);
 PARAM_DEFINE_FLOAT(POSE_I_MAX_Z, 0.0f);
 
 /**
+ * Enable XY position integrator
+ *
+ * @group UUV Position Control
+ * @min 0
+ * @max 1
+ * @value 0 Disabled
+ * @value 1 Enabled
+ */
+PARAM_DEFINE_INT32(POSE_XY_I_EN, 0);
+
+/**
+ * Integral gain for XY position control
+ *
+ * @min 0.0
+ * @max 2.0
+ * @decimal 2
+ * @group UUV Position Control
+ */
+PARAM_DEFINE_FLOAT(POSE_KI_XY, 0.0f);
+
+/**
+ * Maximum integrator output for XY position control
+ *
+ * @min 0.0
+ * @max 1.0
+ * @decimal 2
+ * @group UUV Position Control
+ */
+PARAM_DEFINE_FLOAT(POSE_I_MAX_XY, 0.0f);
+
+/**
  * Maximum age of dvl setpoint
  *
  * @group UUV Position Control
