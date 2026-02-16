@@ -70,6 +70,9 @@ param set-default POSE_Z_I_ENABLE 1
 param set-default POSE_KI_Z 0.3
 param set-default POSE_I_MAX_Z 0.2
 
+# --- Surge-pitch feedforward ---
+param set-default UUV_SURGE_PFF 0.113
+
 # --- Saturation ---
 param set-default UUV_TORQUE_SAT 1.0
 param set-default UUV_THRUST_SAT 1.0
