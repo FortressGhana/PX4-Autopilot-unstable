@@ -106,16 +106,16 @@ param set-default CA_ROTOR6_AX 0
 param set-default CA_ROTOR6_AY 1
 param set-default CA_ROTOR6_AZ 0
 param set-default CA_ROTOR6_KM 0
-param set-default CA_ROTOR6_PX 0.2886
-param set-default CA_ROTOR6_PY 0.0880
+param set-default CA_ROTOR6_PX 0
+param set-default CA_ROTOR6_PY 0
 param set-default CA_ROTOR6_PZ 0
 
 param set-default CA_ROTOR7_AX 0
 param set-default CA_ROTOR7_AY -1
 param set-default CA_ROTOR7_AZ 0
 param set-default CA_ROTOR7_KM 0
-param set-default CA_ROTOR7_PX -0.2884
-param set-default CA_ROTOR7_PY 0.0880
+param set-default CA_ROTOR7_PX 0
+param set-default CA_ROTOR7_PY 0
 param set-default CA_ROTOR7_PZ 0
 
 param set-default PWM_MAIN_FUNC1 101
@@ -154,6 +154,9 @@ param set-default PWM_MAIN_DIS6 1250
 param set-default PWM_MAIN_DIS7 1250
 param set-default PWM_MAIN_DIS8 1250
 
+#set PWM rates for AUX
+param set-default PWM_AUX_TIM0 400 #AUX 1-2
+param set-default PWM_AUX_TIM1 400 #AUX 3-4
 
 #Assign AUX motors
 param set-default PWM_AUX_FUNC1 301
@@ -165,6 +168,11 @@ param set-default PWM_AUX_FUNC6 0
 param set-default PWM_AUX_FUNC7 0
 param set-default PWM_AUX_FUNC8 0
 
-#set PWM rates for AUX
-param set-default PWM_AUX_TIM0 400 #AUX 1-2
-param set-default PWM_AUX_TIM1 400 #AUX 3-4
+param set-default PWM_AUX_MIN1 800
+param set-default PWM_AUX_MIN2 800
+
+param set-default PWM_AUX_MAX1 2000
+param set-default PWM_AUX_MAX2 2000
+
+param set-default PWM_AUX_DIS1 800
+param set-default PWM_AUX_DIS2 800
