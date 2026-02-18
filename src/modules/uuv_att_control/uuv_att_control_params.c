@@ -103,6 +103,33 @@ PARAM_DEFINE_FLOAT(UUV_YAW_P, 4.0f);
  */
 PARAM_DEFINE_FLOAT(UUV_YAW_D, 2.0f);
 
+/**
+ * Yaw integral gain
+ *
+ * Integral gain for yaw attitude control. Eliminates steady-state yaw
+ * error from persistent disturbances (e.g. unmodeled reaction torques).
+ * Set to 0 to disable.
+ *
+ * @min 0.0
+ * @max 5.0
+ * @decimal 2
+ * @group UUV Attitude Control
+ */
+PARAM_DEFINE_FLOAT(UUV_YAW_I, 0.0f);
+
+/**
+ * Yaw integral limit
+ *
+ * Maximum absolute value of the yaw integral term output.
+ * Prevents integral windup.
+ *
+ * @min 0.0
+ * @max 1.0
+ * @decimal 2
+ * @group UUV Attitude Control
+ */
+PARAM_DEFINE_FLOAT(UUV_YAW_I_MAX, 0.2f);
+
 
 // Gains for Manual Inputs in different Modes
 /**

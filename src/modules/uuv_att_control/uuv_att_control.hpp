@@ -134,6 +134,7 @@ private:
 
 	perf_counter_t	_loop_perf;
 	hrt_abstime _last_run{0};
+	float _yaw_integral{0.0f};
 	// Member variables
 	AngularVelocitySource _current_ang_vel_source{AngularVelocitySource::PX4_GYRO};
 	uint64_t _last_ext_vel_warning_us{0};
@@ -168,7 +169,9 @@ private:
 		(ParamInt<px4::params::UUV_USE_EXT_W>)    _param_use_ext_w,
 		(ParamFloat<px4::params::UUV_EXTW_MAX_AGE>) _param_extw_max_age_s,
 		(ParamFloat<px4::params::UUV_SURGE_PFF>) _param_surge_pitch_ff,
-		(ParamFloat<px4::params::UUV_HEAVE_YFF>) _param_heave_yaw_ff
+		(ParamFloat<px4::params::UUV_HEAVE_YFF>) _param_heave_yaw_ff,
+		(ParamFloat<px4::params::UUV_YAW_I>) _param_yaw_i,
+		(ParamFloat<px4::params::UUV_YAW_I_MAX>) _param_yaw_i_max
 
 	)
 
@@ -183,7 +186,7 @@ private:
 	 */
 	void control_attitude_geo(const vehicle_attitude_s &attitude, const vehicle_attitude_setpoint_s &attitude_setpoint,
 				  const vehicle_angular_velocity_s &angular_velocity, const vehicle_rates_setpoint_s &rates_setpoint,
-				  bool attitude_control_enabled);
+				  bool attitude_control_enabled, float dt);
 	void constrain_actuator_commands(float roll_u, float pitch_u, float yaw_u,
 					 float thrust_x, float thrust_y, float thrust_z);
 	void generate_attitude_setpoint(float dt);

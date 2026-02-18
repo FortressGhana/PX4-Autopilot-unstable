@@ -147,7 +147,7 @@ void UUVAttitudeControl::constrain_actuator_commands(float roll_u, float pitch_u
 
 void UUVAttitudeControl::control_attitude_geo(const vehicle_attitude_s &attitude,
 		const vehicle_attitude_setpoint_s &attitude_setpoint, const vehicle_angular_velocity_s &angular_velocity,
-		const vehicle_rates_setpoint_s &rates_setpoint, bool attitude_control_enabled)
+		const vehicle_rates_setpoint_s &rates_setpoint, bool attitude_control_enabled, float dt)
 {
 	/** Geometric Controller
 	 *
@@ -210,6 +210,23 @@ void UUVAttitudeControl::control_attitude_geo(const vehicle_attitude_s &attitude
 		float pitch_u = torques(1);
 		float yaw_u = torques(2);
 
+		// Yaw integral: eliminates steady-state yaw error
+		const float yaw_i_gain = _param_yaw_i.get();
+
+		if (yaw_i_gain > FLT_EPSILON && dt > 0.0f) {
+			// Reset on large error to prevent windup from setpoint jumps
+			if (fabsf(e_R_vec(2)) > 0.5f) {
+				_yaw_integral = 0.0f;
+			}
+
+			_yaw_integral += e_R_vec(2) * dt;
+			_yaw_integral = math::constrain(_yaw_integral, -_param_yaw_i_max.get(), _param_yaw_i_max.get());
+			yaw_u -= _yaw_integral * yaw_i_gain;
+
+		} else {
+			_yaw_integral = 0.0f;
+		}
+
 		// Feedforward: compensate pitch coupling from surge thrusters below CG
 		const float surge_pff = _param_surge_pitch_ff.get();
 
@@ -227,6 +244,9 @@ void UUVAttitudeControl::control_attitude_geo(const vehicle_attitude_s &attitude
 		constrain_actuator_commands(roll_u, pitch_u, yaw_u, thrust_x, thrust_y, thrust_z);
 
 	} else {
+		// No attitude control — reset yaw integrator
+		_yaw_integral = 0.0f;
+
 		// take thrust from rates message
 		float thrust_x = _rates_setpoint.thrust_body[0];
 		float thrust_y = _rates_setpoint.thrust_body[1];
@@ -318,6 +338,7 @@ void UUVAttitudeControl::reset_attitude_setpoint(vehicle_attitude_s &v_att)
 	_attitude_setpoint.thrust_body[0] = 0.f;
 	_attitude_setpoint.thrust_body[1] = 0.f;
 	_attitude_setpoint.thrust_body[2] = 0.f;
+	_yaw_integral = 0.0f;
 }
 
 bool UUVAttitudeControl::select_angular_velocity(vehicle_angular_velocity_s &out)
@@ -479,14 +500,14 @@ void UUVAttitudeControl::Run()
 				/* Generate atttiude setpoint from sticks */
 				generate_attitude_setpoint(dt);
 
-				control_attitude_geo(attitude, _attitude_setpoint, angular_velocity, _rates_setpoint, true);
+				control_attitude_geo(attitude, _attitude_setpoint, angular_velocity, _rates_setpoint, true, dt);
 
 			} else if (!_vcontrol_mode.flag_control_attitude_enabled
 				   && _vcontrol_mode.flag_control_rates_enabled) {
 				/* Run Rate mode */
 				generate_rates_setpoint(dt);
 
-				control_attitude_geo(attitude, _attitude_setpoint, angular_velocity, _rates_setpoint, false);
+				control_attitude_geo(attitude, _attitude_setpoint, angular_velocity, _rates_setpoint, false, dt);
 
 			} else if (!_vcontrol_mode.flag_control_attitude_enabled
 				   && !_vcontrol_mode.flag_control_rates_enabled) {
@@ -504,12 +525,12 @@ void UUVAttitudeControl::Run()
 				/* Get attitude and rate setpoints and control system */
 				_vehicle_attitude_setpoint_sub.update(&_attitude_setpoint); // come from position controller
 				_vehicle_rates_setpoint_sub.update(&_rates_setpoint); // come from an external source?
-				control_attitude_geo(attitude, _attitude_setpoint, angular_velocity, _rates_setpoint, true);
+				control_attitude_geo(attitude, _attitude_setpoint, angular_velocity, _rates_setpoint, true, dt);
 
 			} else {
 				/* Get rate setpoints and control system */
 				_vehicle_rates_setpoint_sub.update(&_rates_setpoint);
-				control_attitude_geo(attitude, _attitude_setpoint, angular_velocity, _rates_setpoint, false);
+				control_attitude_geo(attitude, _attitude_setpoint, angular_velocity, _rates_setpoint, false, dt);
 			}
 		}
 
