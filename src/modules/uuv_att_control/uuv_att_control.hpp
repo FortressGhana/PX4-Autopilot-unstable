@@ -169,6 +169,7 @@ private:
 		(ParamInt<px4::params::UUV_USE_EXT_W>)    _param_use_ext_w,
 		(ParamFloat<px4::params::UUV_EXTW_MAX_AGE>) _param_extw_max_age_s,
 		(ParamFloat<px4::params::UUV_SURGE_PFF>) _param_surge_pitch_ff,
+		(ParamFloat<px4::params::UUV_SURGE_YFF>) _param_surge_yaw_ff,
 		(ParamFloat<px4::params::UUV_HEAVE_YFF>) _param_heave_yaw_ff,
 		(ParamFloat<px4::params::UUV_YAW_I>) _param_yaw_i,
 		(ParamFloat<px4::params::UUV_YAW_I_MAX>) _param_yaw_i_max
