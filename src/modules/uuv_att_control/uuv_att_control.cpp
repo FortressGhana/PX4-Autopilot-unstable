@@ -214,9 +214,17 @@ void UUVAttitudeControl::control_attitude_geo(const vehicle_attitude_s &attitude
 		const float yaw_i_gain = _param_yaw_i.get();
 
 		if (yaw_i_gain > FLT_EPSILON && dt > 0.0f) {
-			// Reset on large error to prevent windup from setpoint jumps
-			if (fabsf(e_R_vec(2)) > 0.5f) {
+			const float error_abs = fabsf(e_R_vec(2));
+
+			if (error_abs > 1.5f) {
+				// Very large error (>86°): setpoint jump, hard reset
 				_yaw_integral = 0.0f;
+
+			} else if (error_abs > 0.3f) {
+				// Moderate error: exponential decay preserves correction
+				// during brief disturbances, clears during sustained errors
+				const float decay_rate = 2.0f + 6.0f * (error_abs - 0.3f) / 1.2f;
+				_yaw_integral *= math::max(1.0f - decay_rate * dt, 0.0f);
 			}
 
 			_yaw_integral += e_R_vec(2) * dt;

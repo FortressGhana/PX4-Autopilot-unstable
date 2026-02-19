@@ -76,13 +76,16 @@ param set-default POSE_KI_Z 0.3
 param set-default POSE_I_MAX_Z 0.2
 
 # --- Surge-pitch feedforward ---
-param set-default UUV_SURGE_PFF 0.113
+# Disabled: allocator handles R4/R5 pitch coupling directly via effectiveness matrix.
+# Thrusters are above CG (PZ=-0.113), producing nose-down coupling. Feedforward
+# would double this effect since it also applies nose-down correction.
+param set-default UUV_SURGE_PFF 0
 
 # --- Saturation ---
 param set-default UUV_TORQUE_SAT 1.0
 param set-default UUV_THRUST_SAT 1.0
 
 # Pixhawk IMU position relative to COG (body FRD frame)
-param set-default EKF2_IMU_POS_X 0.0113
-param set-default EKF2_IMU_POS_Y 0.0762
-param set-default EKF2_IMU_POS_Z -0.0472
+param set-default EKF2_IMU_POS_X -0.095
+param set-default EKF2_IMU_POS_Y 0.005
+param set-default EKF2_IMU_POS_Z -0.0251
