@@ -104,27 +104,37 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 
 	// --- Measurement selection: prefer DVL when fresh and valid
 	float z_meas = vlocal_pos.z; // default fallback to EKF
-	float vx_meas = vlocal_pos.vx;
-	float vy_meas = vlocal_pos.vy;
-	float vz_meas = vlocal_pos.vz;
 	const hrt_abstime now = hrt_absolute_time();
 
 	bool dvl_ok = false;
+
 	if (dvl.timestamp != 0) {
 		const float dvl_age_s = (now - dvl.timestamp) * 1e-6f;
-		dvl_ok = (dvl_age_s >= 0.0f) && (dvl_age_s <= _param_dvl_alt_max_age.get()) && PX4_ISFINITE(dvl.altitude);
+		dvl_ok = (dvl_age_s >= 0.0f) && (dvl_age_s <= _param_dvl_alt_max_age.get())
+			 && dvl.velocity_valid && dvl.is_dvl_beam_valid;
 	}
+
+	Vector3f vel_world;
+
 	if (dvl_ok) {
-		// Use DVL altitude for Z position
-		z_meas = -dvl.altitude; // DVL altitude is positive (distance to bottom), NED z is positive down
+		// DVL altitude for Z position
+		if (PX4_ISFINITE(dvl.altitude)) {
+			z_meas = -dvl.altitude; // DVL altitude is positive (distance to bottom), NED z is positive down
+		}
+
+		// DVL velocity is body-frame — rotate to NED world frame
+		Vector3f dvl_vel_body(dvl.velocity[0], dvl.velocity[1], dvl.velocity[2]);
+		vel_world = q_att.rotateVector(dvl_vel_body);
+
+	} else {
+		// Fallback to EKF velocity
+		vel_world = Vector3f(vlocal_pos.vx, vlocal_pos.vy, vlocal_pos.vz);
 	}
 
 	Vector3f pos_err(pos_des(0) - vlocal_pos.x,
-			pos_des(1) - vlocal_pos.y,
-			pos_des(2) - z_meas
+			 pos_des(1) - vlocal_pos.y,
+			 pos_des(2) - z_meas
 		);
-
-	Vector3f vel_world(vx_meas, vy_meas, vz_meas); // vel in world frame, DVL when available
 	Vector3f vel_des_world = vel_des; // world frame desired velocity
 
 
@@ -190,12 +200,6 @@ void UUVPOSControl::pose_controller_6dof(const Vector3f &pos_des, vehicle_attitu
 	_attitude_setpoint.thrust_body[0] = rotated_input(0);
 	_attitude_setpoint.thrust_body[1] = rotated_input(1);
 	_attitude_setpoint.thrust_body[2] = rotated_input(2);
-
-	// log attitude setpoint
-	PX4_WARN("Attitude setpoint thrust: x: %.2f, y: %.2f, z: %.2f",
-		  (double)_attitude_setpoint.thrust_body[0],
-		  (double)_attitude_setpoint.thrust_body[1],
-		  (double)_attitude_setpoint.thrust_body[2]);
 }
 
 void UUVPOSControl::check_setpoint_validity(vehicle_local_position_s &vlocal_pos)
