@@ -161,10 +161,10 @@ param set-default PWM_AUX_TIM1 400 #AUX 3-4
 #Assign AUX motors
 param set-default PWM_AUX_FUNC1 301
 param set-default PWM_AUX_FUNC2 302
-param set-default PWM_AUX_FUNC3 1002
-param set-default PWM_AUX_FUNC4 1002
-param set-default PWM_AUX_FUNC5 1002
-param set-default PWM_AUX_FUNC6 1002
+param set-default PWM_AUX_FUNC3 2
+param set-default PWM_AUX_FUNC4 2
+param set-default PWM_AUX_FUNC5 2
+param set-default PWM_AUX_FUNC6 2
 param set-default PWM_AUX_FUNC7 0
 param set-default PWM_AUX_FUNC8 0
 
